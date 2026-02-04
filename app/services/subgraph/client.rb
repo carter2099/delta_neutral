@@ -1,14 +1,33 @@
 module Subgraph
+  # HTTP client for querying The Graph's hosted subgraph endpoints via GraphQL.
+  #
+  # Sends POST requests with HTTPX and handles API key injection, HTTP errors,
+  # and GraphQL-level error responses.
+  #
+  # @example
+  #   client = Subgraph::Client.new(url: "https://gateway.thegraph.com/api/subgraphs/id/abc")
+  #   data = client.query("{ positions(first: 10) { id } }")
   class Client
     class Error < StandardError; end
+    # Raised when the GraphQL response contains errors in the +errors+ key.
     class QueryError < Error; end
+    # Raised on HTTP-level failures (timeouts, connection errors, non-200 status).
     class NetworkError < Error; end
 
+    # @param url [String] the subgraph endpoint URL
+    # @param api_key [String, nil] The Graph API key (falls back to +GRAPH_API_KEY+ env var)
     def initialize(url:, api_key: nil)
       @url = url
       @api_key = api_key || ENV["GRAPH_API_KEY"]
     end
 
+    # Execute a GraphQL query against the subgraph.
+    #
+    # @param graphql_query [String] the GraphQL query string
+    # @param variables [Hash] variables to pass to the query (default: +{}+)
+    # @return [Hash] the +data+ key from the GraphQL response
+    # @raise [QueryError] if the response contains GraphQL errors
+    # @raise [NetworkError] if the HTTP request fails or returns a non-200 status
     def query(graphql_query, variables: {})
       full_url = build_url
 

@@ -1,18 +1,38 @@
 module Hyperliquid
+  # Executes hedge adjustments on Hyperliquid, with paper trading support.
+  #
+  # Accepts adjustment hashes (from {Hedging::Calculator#calculate_adjustments})
+  # and either executes real market orders via {ClientWrapper} or simulates them
+  # with current market prices when in paper trading mode.
+  #
+  # @example Paper trading
+  #   executor = Hyperliquid::OrderExecutor.new(client: client, paper_trading: true)
+  #   result = executor.execute_adjustments([
+  #     { asset: "ETH", current_size: -1.5, target_size: -2.0 }
+  #   ])
+  #   result[:success] #=> true
+  #   result[:results].first[:simulated] #=> true
   class OrderExecutor
+    # Raised when order execution fails.
     class ExecutionError < StandardError; end
 
+    # @param client [Hyperliquid::ClientWrapper] the HL API client
+    # @param paper_trading [Boolean] simulate orders instead of executing (default: false)
     def initialize(client:, paper_trading: false)
       @client = client
       @paper_trading = paper_trading
     end
 
+    # @return [Boolean] whether this executor is in paper trading mode
     def paper_trading?
       @paper_trading
     end
 
-    # Execute a list of hedge adjustments
-    # adjustments: [{ asset: "ETH", current_size: -1.5, target_size: -2.0 }, ...]
+    # Execute a batch of hedge adjustments sequentially.
+    #
+    # @param adjustments [Array<Hash>] adjustments with keys +:asset+,
+    #   +:current_size+, +:target_size+
+    # @return [Hash] +{ success: Boolean, results: Array<Hash> }+
     def execute_adjustments(adjustments)
       results = []
 
@@ -27,7 +47,10 @@ module Hyperliquid
       }
     end
 
-    # Execute a single adjustment
+    # Execute or simulate a single hedge adjustment.
+    #
+    # @param adjustment [Hash] with keys +:asset+, +:current_size+, +:target_size+
+    # @return [Hash] result with +:success+, +:asset+, +:action+ (and +:simulated+ if paper trading)
     def execute_single_adjustment(adjustment)
       asset = adjustment[:asset]
       current_size = adjustment[:current_size] || 0
@@ -47,7 +70,10 @@ module Hyperliquid
       { success: false, asset: asset, error: e.message }
     end
 
-    # Close all positions for given assets
+    # Close all positions for the given assets.
+    #
+    # @param assets [Array<String>] asset symbols to close (e.g., +["ETH", "ARB"]+)
+    # @return [Array<Hash>] per-asset results with +:success+, +:asset+, +:action+
     def close_positions(assets)
       results = []
 

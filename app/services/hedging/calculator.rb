@@ -1,6 +1,25 @@
 module Hedging
+  # Calculates target hedge positions and required adjustments for a Uniswap V3
+  # LP position based on its current token holdings and hedge configuration.
+  #
+  # Target hedge sizes are negative (short) and scaled by the configured
+  # +hedge_ratio+. Tokens mapped to +nil+ in the configuration (e.g., stablecoins)
+  # are not hedged. When both LP tokens map to the same HL symbol, their targets
+  # are combined.
+  #
+  # @example
+  #   calculator = Hedging::Calculator.new
+  #   targets = calculator.calculate_targets(position)
+  #   #=> { "ETH" => { asset: "ETH", target_size: -10.5, ... } }
+  #
+  #   adjustments = calculator.calculate_adjustments(position)
+  #   #=> [{ asset: "ETH", current_size: -8.0, target_size: -10.5, delta: -2.5, ... }]
   class Calculator
-    # Calculate target hedge positions for a position
+    # Calculate target hedge positions for each hedgeable token in the position.
+    #
+    # @param position [Position] a position with an associated {HedgeConfiguration}
+    # @return [Hash{String => Hash}] targets keyed by HL asset symbol, each with
+    #   +:asset+, +:target_size+, +:source_token+, +:source_amount+
     def calculate_targets(position)
       config = position.hedge_configuration
       return {} unless config
@@ -42,7 +61,13 @@ module Hedging
       targets
     end
 
-    # Compare current hedge positions with targets and return required adjustments
+    # Compare current hedge positions against targets and return required adjustments.
+    #
+    # Includes adjustments for positions that should be closed (no longer in targets).
+    #
+    # @param position [Position] a position with hedge_positions and hedge_configuration
+    # @return [Array<Hash>] adjustments with keys +:asset+, +:current_size+,
+    #   +:target_size+, +:delta+, +:source_token+, +:source_amount+
     def calculate_adjustments(position)
       targets = calculate_targets(position)
       current_hedges = position.hedge_positions.index_by(&:asset)
@@ -78,7 +103,11 @@ module Hedging
       adjustments
     end
 
-    # Calculate total notional value of target hedges at current prices
+    # Calculate the total USD notional value of target hedges at given prices.
+    #
+    # @param position [Position] a position with an associated {HedgeConfiguration}
+    # @param prices [Hash{String => Numeric}] current prices keyed by HL asset symbol
+    # @return [Numeric] total notional value in USD
     def calculate_notional_value(position, prices)
       targets = calculate_targets(position)
       total = 0

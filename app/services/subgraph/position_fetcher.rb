@@ -1,12 +1,31 @@
 module Subgraph
+  # Fetches and normalizes Uniswap V3 position data from The Graph subgraph.
+  #
+  # Supports both Ethereum mainnet and Arbitrum networks. Raw subgraph JSON
+  # is normalized into consistent Ruby hashes with snake_case keys and proper
+  # numeric types.
+  #
+  # @example Fetch a position on Arbitrum
+  #   fetcher = Subgraph::PositionFetcher.new(network: "arbitrum")
+  #   position = fetcher.fetch(123456)
+  #   position[:token0][:symbol] #=> "WETH"
   class PositionFetcher
+    # Raised when a position NFT ID is not found in the subgraph.
     class PositionNotFound < StandardError; end
 
+    # @param network [String] the network to query ("ethereum" or "arbitrum")
     def initialize(network: "ethereum")
       @network = network
       @client = Client.new(url: subgraph_url)
     end
 
+    # Fetch a single position by its Uniswap V3 NFT token ID.
+    #
+    # @param nft_id [Integer, String] the NFT position token ID
+    # @return [Hash] normalized position data with keys +:id+, +:liquidity+,
+    #   +:tick_lower+, +:tick_upper+, +:pool+, +:token0+, +:token1+, etc.
+    # @raise [PositionNotFound] if no position exists with the given ID
+    # @raise [Subgraph::Client::NetworkError] on HTTP failures
     def fetch(nft_id)
       result = @client.query(Queries::POSITION_BY_ID, variables: { id: nft_id.to_s })
 
@@ -16,6 +35,10 @@ module Subgraph
       normalize_position(position_data)
     end
 
+    # Fetch all active positions for a wallet address.
+    #
+    # @param owner_address [String] the Ethereum wallet address (case-insensitive)
+    # @return [Array<Hash>] array of normalized position hashes
     def fetch_by_owner(owner_address)
       result = @client.query(
         Queries::POSITIONS_BY_OWNER,
@@ -25,6 +48,10 @@ module Subgraph
       (result["positions"] || []).map { |p| normalize_position(p) }
     end
 
+    # Fetch pool-level data including pricing, TVL, and token metadata.
+    #
+    # @param pool_address [String] the pool contract address
+    # @return [Hash, nil] normalized pool data with USD pricing, or nil if not found
     def fetch_pool(pool_address)
       result = @client.query(Queries::POOL_DATA, variables: { id: pool_address.downcase })
 

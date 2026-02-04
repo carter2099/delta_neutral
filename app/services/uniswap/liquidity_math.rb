@@ -1,12 +1,29 @@
 module Uniswap
+  # Calculates token amounts held within a Uniswap V3 concentrated liquidity position.
+  #
+  # Uses the Uniswap V3 formulas to determine how much of each token is held
+  # given liquidity, current price, and the position's tick range:
+  #   Δx = L * (1/√Pc - 1/√Pb)   — token0 when price is in range
+  #   Δy = L * (√Pc - √Pa)        — token1 when price is in range
+  #
+  # Handles all three cases: price below range (all token0), in range (mixed),
+  # and above range (all token1).
+  #
+  # @see Uniswap::TickMath for tick/price conversion utilities
+  # @see https://uniswap.org/whitepaper-v3.pdf Section 6.3
   class LiquidityMath
+    # @return [BigDecimal] 2^96, the Q96 fixed-point scaling factor
     Q96 = BigDecimal(2**96)
 
     class << self
-      # Calculate token0 amount from liquidity and tick range
-      # Δx = L * (1/√Pc - 1/√Pb) when Pa <= Pc < Pb
-      # Δx = L * (1/√Pa - 1/√Pb) when Pc < Pa (all token0)
-      # Δx = 0 when Pc >= Pb (all token1)
+      # Calculate the token0 amount held in a position given sqrt prices in Q96 format.
+      #
+      # @param liquidity [Numeric, String] the position's liquidity value
+      # @param sqrt_price_current [Numeric, String] the pool's current sqrt price (Q96)
+      # @param sqrt_price_lower [Numeric, String] the lower tick's sqrt price (Q96)
+      # @param sqrt_price_upper [Numeric, String] the upper tick's sqrt price (Q96)
+      # @param decimals [Integer] token0 decimals for unit conversion (default: 18)
+      # @return [BigDecimal] the token0 amount in human-readable units
       def get_token0_amount(liquidity:, sqrt_price_current:, sqrt_price_lower:, sqrt_price_upper:, decimals: 18)
         liquidity = BigDecimal(liquidity.to_s)
         sqrt_pc = BigDecimal(sqrt_price_current.to_s) / Q96
@@ -28,10 +45,14 @@ module Uniswap
         amount / BigDecimal(10**decimals)
       end
 
-      # Calculate token1 amount from liquidity and tick range
-      # Δy = L * (√Pc - √Pa) when Pa < Pc <= Pb
-      # Δy = L * (√Pb - √Pa) when Pc > Pb (all token1)
-      # Δy = 0 when Pc <= Pa (all token0)
+      # Calculate the token1 amount held in a position given sqrt prices in Q96 format.
+      #
+      # @param liquidity [Numeric, String] the position's liquidity value
+      # @param sqrt_price_current [Numeric, String] the pool's current sqrt price (Q96)
+      # @param sqrt_price_lower [Numeric, String] the lower tick's sqrt price (Q96)
+      # @param sqrt_price_upper [Numeric, String] the upper tick's sqrt price (Q96)
+      # @param decimals [Integer] token1 decimals for unit conversion (default: 18)
+      # @return [BigDecimal] the token1 amount in human-readable units
       def get_token1_amount(liquidity:, sqrt_price_current:, sqrt_price_lower:, sqrt_price_upper:, decimals: 18)
         liquidity = BigDecimal(liquidity.to_s)
         sqrt_pc = BigDecimal(sqrt_price_current.to_s) / Q96
@@ -53,7 +74,25 @@ module Uniswap
         amount / BigDecimal(10**decimals)
       end
 
-      # Calculate both token amounts at once
+      # Calculate both token amounts at once from tick values.
+      #
+      # Converts ticks to sqrt prices via {TickMath} and delegates to
+      # {.get_token0_amount} and {.get_token1_amount}.
+      #
+      # @param liquidity [Numeric, String] the position's liquidity value
+      # @param current_tick [Integer] the pool's current tick
+      # @param tick_lower [Integer] the position's lower tick boundary
+      # @param tick_upper [Integer] the position's upper tick boundary
+      # @param token0_decimals [Integer] token0 decimals (default: 18)
+      # @param token1_decimals [Integer] token1 decimals (default: 18)
+      # @return [Hash{Symbol => BigDecimal}] +{ token0: amount, token1: amount }+
+      #
+      # @example
+      #   Uniswap::LiquidityMath.get_amounts(
+      #     liquidity: "1000000000000000000",
+      #     current_tick: 0, tick_lower: -1000, tick_upper: 1000,
+      #     token0_decimals: 18, token1_decimals: 6
+      #   )
       def get_amounts(liquidity:, current_tick:, tick_lower:, tick_upper:, token0_decimals: 18, token1_decimals: 18)
         sqrt_price_current = TickMath.get_sqrt_ratio_at_tick(current_tick)
         sqrt_price_lower = TickMath.get_sqrt_ratio_at_tick(tick_lower)
@@ -77,7 +116,14 @@ module Uniswap
         }
       end
 
-      # Calculate amounts from raw subgraph data
+      # Calculate token amounts directly from raw subgraph position data.
+      #
+      # Extracts liquidity, tick range, current tick, and token decimals from the
+      # subgraph response hash and delegates to {.get_amounts}. Handles both
+      # symbol and string keys, and nested tick hashes (+{ "tickIdx" => "0" }+).
+      #
+      # @param position_data [Hash] raw position data from {Subgraph::PositionFetcher}
+      # @return [Hash{Symbol => BigDecimal}] +{ token0: amount, token1: amount }+
       def calculate_from_position_data(position_data)
         liquidity = position_data[:liquidity] || position_data["liquidity"]
 
