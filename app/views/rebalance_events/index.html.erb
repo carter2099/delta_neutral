@@ -1,0 +1,56 @@
+<div class="page-header">
+  <h1 class="page-title">Rebalance History</h1>
+</div>
+
+<% if @rebalance_events.empty? %>
+  <div class="empty-state">
+    <h3>No rebalance events yet</h3>
+    <p>Rebalance history will appear here after your first rebalance.</p>
+  </div>
+<% else %>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Position</th>
+        <th>Trigger</th>
+        <th>Status</th>
+        <th>Duration</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @rebalance_events.each do |event| %>
+        <tr>
+          <td><%= event.created_at.strftime("%Y-%m-%d %H:%M") %></td>
+          <td>
+            <%= link_to position_path(event.position) do %>
+              <%= event.position.token0_symbol %>/<%= event.position.token1_symbol %>
+            <% end %>
+          </td>
+          <td>
+            <span class="badge badge-neutral"><%= event.trigger_type.capitalize %></span>
+            <% if event.paper_trade? %>
+              <span class="badge badge-info">Paper</span>
+            <% end %>
+          </td>
+          <td>
+            <span class="badge badge-<%= event.status == 'completed' ? 'success' : event.status == 'failed' ? 'danger' : 'warning' %>">
+              <%= event.status.capitalize %>
+            </span>
+          </td>
+          <td>
+            <% if event.duration %>
+              <%= number_with_precision(event.duration, precision: 2) %>s
+            <% else %>
+              —
+            <% end %>
+          </td>
+          <td>
+            <%= link_to "Details", rebalance_event_path(event), class: "btn btn-sm btn-secondary" %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% end %>

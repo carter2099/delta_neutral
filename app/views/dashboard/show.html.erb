@@ -1,0 +1,163 @@
+<div class="page-header">
+  <h1 class="page-title">Dashboard</h1>
+  <%= link_to "Add Position", new_position_path, class: "btn btn-primary" %>
+</div>
+
+<% if current_user.paper_trading? %>
+  <div class="flash flash-notice">Paper Trading Mode - No real orders will be executed</div>
+<% end %>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">Total LP Value</div>
+    <div class="stat-value">$<%= number_with_delimiter(@total_lp_value.round(2)) %></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Total Hedge Value</div>
+    <div class="stat-value">$<%= number_with_delimiter(@total_hedge_value.round(2)) %></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Unrealized PnL</div>
+    <div class="stat-value <%= @total_unrealized_pnl >= 0 ? 'text-green' : 'text-red' %>">
+      <%= @total_unrealized_pnl >= 0 ? '+' : '' %>$<%= number_with_delimiter(@total_unrealized_pnl.round(2)) %>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Realized PnL</div>
+    <div class="stat-value <%= @total_realized_pnl >= 0 ? 'text-green' : 'text-red' %>">
+      <%= @total_realized_pnl >= 0 ? '+' : '' %>$<%= number_with_delimiter(@total_realized_pnl.round(2)) %>
+    </div>
+  </div>
+</div>
+
+<% if @positions_needing_rebalance.any? %>
+  <div class="card" style="border-color: var(--accent-yellow); margin-bottom: 1.5rem;">
+    <div class="card-header">
+      <h3 class="card-title text-yellow">Positions Needing Rebalance</h3>
+    </div>
+    <% @positions_needing_rebalance.each do |position| %>
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0;">
+        <span><%= position.token0_symbol %>/<%= position.token1_symbol %> on <%= position.network.capitalize %></span>
+        <%= link_to "Rebalance", rebalance_position_path(position), method: :post, class: "btn btn-sm btn-primary" %>
+      </div>
+    <% end %>
+  </div>
+<% end %>
+
+<div class="section">
+  <h2 class="section-title">Active Positions</h2>
+
+  <% if @positions.empty? %>
+    <div class="empty-state">
+      <h3>No positions yet</h3>
+      <p>Add your first Uniswap V3 position to start tracking.</p>
+      <%= link_to "Add Position", new_position_path, class: "btn btn-primary" %>
+    </div>
+  <% else %>
+    <% @positions.each do |position| %>
+      <div class="position-card">
+        <div class="position-header">
+          <div>
+            <div class="position-pair">
+              <%= link_to position_path(position) do %>
+                <%= position.token0_symbol || "Token0" %>/<%= position.token1_symbol || "Token1" %>
+              <% end %>
+            </div>
+            <span class="position-network"><%= position.network.capitalize %></span>
+            <% if position.current_tick %>
+              <span class="range-status <%= position.in_range? ? 'in-range' : 'out-of-range' %>">
+                <%= position.in_range? ? 'In Range' : 'Out of Range' %>
+              </span>
+            <% end %>
+          </div>
+          <div class="btn-group">
+            <%= link_to "Sync", sync_position_path(position), method: :post, class: "btn btn-sm btn-secondary" %>
+            <%= link_to "Rebalance", rebalance_position_path(position), method: :post, class: "btn btn-sm btn-primary" %>
+          </div>
+        </div>
+
+        <div class="position-details">
+          <div class="position-detail">
+            <span class="detail-label"><%= position.token0_symbol || "Token0" %></span>
+            <span class="detail-value"><%= number_with_precision(position.token0_amount || 0, precision: 6) %></span>
+          </div>
+          <div class="position-detail">
+            <span class="detail-label"><%= position.token1_symbol || "Token1" %></span>
+            <span class="detail-value"><%= number_with_precision(position.token1_amount || 0, precision: 6) %></span>
+          </div>
+          <div class="position-detail">
+            <span class="detail-label">Value</span>
+            <span class="detail-value">$<%= number_with_delimiter(position.total_value_usd.round(2)) %></span>
+          </div>
+          <div class="position-detail">
+            <span class="detail-label">LP Delta</span>
+            <span class="detail-value <%= position.lp_delta_usd >= 0 ? 'text-green' : 'text-red' %>">
+              <%= position.lp_delta_usd >= 0 ? '+' : '' %>$<%= number_with_delimiter(position.lp_delta_usd.round(2)) %>
+            </span>
+          </div>
+        </div>
+
+        <% if position.hedge_positions.any? %>
+          <div style="border-top: 1px solid var(--border-color); padding-top: 0.75rem; margin-top: 0.5rem;">
+            <span class="detail-label" style="margin-bottom: 0.5rem; display: block;">Current Hedges</span>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+              <% position.hedge_positions.each do |hp| %>
+                <div style="font-size: 0.875rem;">
+                  <span class="text-mono"><%= hp.asset %>:</span>
+                  <span class="text-mono <%= hp.unrealized_pnl && hp.unrealized_pnl >= 0 ? 'text-green' : 'text-red' %>">
+                    <%= number_with_precision(hp.size, precision: 4) %>
+                  </span>
+                  <% if hp.unrealized_pnl %>
+                    (<%= hp.unrealized_pnl >= 0 ? '+' : '' %>$<%= number_with_precision(hp.unrealized_pnl, precision: 2) %>)
+                  <% end %>
+                </div>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+
+        <% if position.last_synced_at %>
+          <div class="text-muted" style="font-size: 0.75rem; margin-top: 0.5rem;">
+            Last synced: <%= time_ago_in_words(position.last_synced_at) %> ago
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+  <% end %>
+</div>
+
+<% if @recent_events.any? %>
+  <div class="section">
+    <h2 class="section-title">Recent Activity</h2>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Position</th>
+          <th>Type</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @recent_events.each do |event| %>
+          <tr>
+            <td><%= time_ago_in_words(event.created_at) %> ago</td>
+            <td><%= event.position.token0_symbol %>/<%= event.position.token1_symbol %></td>
+            <td>
+              <span class="badge badge-neutral"><%= event.trigger_type.capitalize %></span>
+              <% if event.paper_trade? %>
+                <span class="badge badge-info">Paper</span>
+              <% end %>
+            </td>
+            <td>
+              <span class="badge badge-<%= event.status == 'completed' ? 'success' : event.status == 'failed' ? 'danger' : 'warning' %>">
+                <%= event.status.capitalize %>
+              </span>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+    <%= link_to "View All History", rebalance_events_path, class: "btn btn-secondary btn-sm", style: "margin-top: 0.5rem;" %>
+  </div>
+<% end %>

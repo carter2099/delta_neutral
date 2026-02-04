@@ -1,0 +1,233 @@
+<div class="page-header">
+  <h1 class="page-title">Rebalance Event</h1>
+  <%= link_to "Back to History", rebalance_events_path, class: "btn btn-secondary" %>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">Position</div>
+    <div class="stat-value" style="font-size: 1.25rem;">
+      <%= link_to position_path(@position) do %>
+        <%= @position.token0_symbol %>/<%= @position.token1_symbol %>
+      <% end %>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Status</div>
+    <div class="stat-value">
+      <span class="badge badge-<%= @rebalance_event.status == 'completed' ? 'success' : @rebalance_event.status == 'failed' ? 'danger' : 'warning' %>">
+        <%= @rebalance_event.status.capitalize %>
+      </span>
+      <% if @rebalance_event.paper_trade? %>
+        <span class="badge badge-info">Paper Trade</span>
+      <% end %>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Trigger</div>
+    <div class="stat-value" style="font-size: 1.25rem;"><%= @rebalance_event.trigger_type.capitalize %></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Duration</div>
+    <div class="stat-value text-mono">
+      <% if @rebalance_event.duration %>
+        <%= number_with_precision(@rebalance_event.duration, precision: 2) %>s
+      <% else %>
+        —
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2 class="section-title">Timeline</h2>
+  <div class="card">
+    <div class="position-details">
+      <div class="position-detail">
+        <span class="detail-label">Created</span>
+        <span class="detail-value"><%= @rebalance_event.created_at.strftime("%Y-%m-%d %H:%M:%S") %></span>
+      </div>
+      <div class="position-detail">
+        <span class="detail-label">Started</span>
+        <span class="detail-value"><%= @rebalance_event.started_at&.strftime("%Y-%m-%d %H:%M:%S") || "—" %></span>
+      </div>
+      <div class="position-detail">
+        <span class="detail-label">Completed</span>
+        <span class="detail-value"><%= @rebalance_event.completed_at&.strftime("%Y-%m-%d %H:%M:%S") || "—" %></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<% if @rebalance_event.error_message.present? %>
+  <div class="section">
+    <h2 class="section-title">Error</h2>
+    <div class="card" style="border-color: var(--accent-red);">
+      <code style="color: var(--accent-red);"><%= @rebalance_event.error_message %></code>
+    </div>
+  </div>
+<% end %>
+
+<div class="section">
+  <h2 class="section-title">Pre-Rebalance State</h2>
+  <div class="card">
+    <% pre_state = @rebalance_event.pre_state %>
+    <% if pre_state.present? %>
+      <div class="position-details">
+        <div class="position-detail">
+          <span class="detail-label"><%= @position.token0_symbol %></span>
+          <span class="detail-value text-mono"><%= number_with_precision(pre_state["token0_amount"] || 0, precision: 6) %></span>
+        </div>
+        <div class="position-detail">
+          <span class="detail-label"><%= @position.token1_symbol %></span>
+          <span class="detail-value text-mono"><%= number_with_precision(pre_state["token1_amount"] || 0, precision: 6) %></span>
+        </div>
+      </div>
+
+      <% if pre_state["hedge_positions"]&.any? %>
+        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+          <span class="detail-label" style="display: block; margin-bottom: 0.5rem;">Hedge Positions</span>
+          <% pre_state["hedge_positions"].each do |hp| %>
+            <div style="font-size: 0.875rem;">
+              <span class="text-mono"><%= hp["asset"] %>: <%= number_with_precision(hp["size"] || 0, precision: 6) %></span>
+              <span class="text-muted">@ $<%= number_with_precision(hp["entry_price"] || 0, precision: 2) %></span>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    <% else %>
+      <p class="text-muted">No state recorded</p>
+    <% end %>
+  </div>
+</div>
+
+<div class="section">
+  <h2 class="section-title">Intended Actions</h2>
+  <div class="card">
+    <% intended = @rebalance_event.intended_actions %>
+    <% if intended.any? %>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Asset</th>
+            <th>Current</th>
+            <th>Target</th>
+            <th>Delta</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% intended.each do |action| %>
+            <tr>
+              <td><strong><%= action["asset"] %></strong></td>
+              <td class="text-mono"><%= number_with_precision(action["current_size"] || 0, precision: 6) %></td>
+              <td class="text-mono"><%= number_with_precision(action["target_size"] || 0, precision: 6) %></td>
+              <td class="text-mono <%= (action["delta"] || 0) >= 0 ? 'text-green' : 'text-red' %>">
+                <%= (action["delta"] || 0) >= 0 ? '+' : '' %><%= number_with_precision(action["delta"] || 0, precision: 6) %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p class="text-muted">No actions</p>
+    <% end %>
+  </div>
+</div>
+
+<% if @rebalance_event.executed_actions.any? %>
+  <div class="section">
+    <h2 class="section-title">Executed Actions</h2>
+    <div class="card">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Asset</th>
+            <th>Action</th>
+            <th>Size</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @rebalance_event.executed_actions.each do |action| %>
+            <tr>
+              <td><strong><%= action["asset"] %></strong></td>
+              <td><%= action["action"]&.to_s&.capitalize %></td>
+              <td class="text-mono"><%= number_with_precision(action["size"] || 0, precision: 6) %></td>
+              <td>
+                <% if action["success"] %>
+                  <span class="badge badge-success">Success</span>
+                  <% if action["simulated"] %>
+                    <span class="badge badge-info">Simulated</span>
+                  <% end %>
+                <% else %>
+                  <span class="badge badge-danger">Failed</span>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<% end %>
+
+<% if @rebalance_event.post_state.present? %>
+  <div class="section">
+    <h2 class="section-title">Post-Rebalance State</h2>
+    <div class="card">
+      <% post_state = @rebalance_event.post_state %>
+      <div class="position-details">
+        <div class="position-detail">
+          <span class="detail-label"><%= @position.token0_symbol %></span>
+          <span class="detail-value text-mono"><%= number_with_precision(post_state["token0_amount"] || 0, precision: 6) %></span>
+        </div>
+        <div class="position-detail">
+          <span class="detail-label"><%= @position.token1_symbol %></span>
+          <span class="detail-value text-mono"><%= number_with_precision(post_state["token1_amount"] || 0, precision: 6) %></span>
+        </div>
+      </div>
+
+      <% if post_state["hedge_positions"]&.any? %>
+        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+          <span class="detail-label" style="display: block; margin-bottom: 0.5rem;">Hedge Positions</span>
+          <% post_state["hedge_positions"].each do |hp| %>
+            <div style="font-size: 0.875rem;">
+              <span class="text-mono"><%= hp["asset"] %>: <%= number_with_precision(hp["size"] || 0, precision: 6) %></span>
+              <span class="text-muted">@ $<%= number_with_precision(hp["entry_price"] || 0, precision: 2) %></span>
+            </div>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+<% end %>
+
+<% if @realized_pnls.any? %>
+  <div class="section">
+    <h2 class="section-title">Realized PnL from this Rebalance</h2>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Asset</th>
+          <th>Size Closed</th>
+          <th>Entry</th>
+          <th>Exit</th>
+          <th>PnL</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @realized_pnls.each do |pnl| %>
+          <tr>
+            <td><%= pnl.asset %></td>
+            <td class="text-mono"><%= number_with_precision(pnl.size_closed, precision: 6) %></td>
+            <td class="text-mono">$<%= number_with_precision(pnl.entry_price, precision: 2) %></td>
+            <td class="text-mono">$<%= number_with_precision(pnl.exit_price, precision: 2) %></td>
+            <td class="text-mono <%= pnl.realized_pnl >= 0 ? 'text-green' : 'text-red' %>">
+              <%= pnl.realized_pnl >= 0 ? '+' : '' %>$<%= number_with_precision(pnl.realized_pnl, precision: 2) %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% end %>

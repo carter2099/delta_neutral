@@ -1,0 +1,301 @@
+<div class="page-header">
+  <h1 class="page-title">
+    <%= @position.token0_symbol || "Token0" %>/<%= @position.token1_symbol || "Token1" %>
+    <span class="badge badge-neutral" style="font-size: 0.75rem; vertical-align: middle;"><%= @position.network.capitalize %></span>
+  </h1>
+  <div class="btn-group">
+    <%= link_to "Edit", edit_position_path(@position), class: "btn btn-secondary" %>
+    <%= link_to "Sync Now", sync_position_path(@position), method: :post, class: "btn btn-secondary" %>
+    <%= link_to "Rebalance", rebalance_position_path(@position), method: :post, class: "btn btn-primary", data: { confirm: "This will #{current_user.paper_trading? ? 'simulate' : 'execute'} a rebalance. Continue?" } %>
+  </div>
+</div>
+
+<% if @position.last_synced_at %>
+  <p class="text-muted" style="margin-bottom: 1rem;">Last synced: <%= time_ago_in_words(@position.last_synced_at) %> ago</p>
+<% end %>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label"><%= @position.token0_symbol || "Token0" %> Amount</div>
+    <div class="stat-value text-mono"><%= number_with_precision(@position.token0_amount || 0, precision: 6) %></div>
+    <% if @position.token0_price_usd %>
+      <div class="text-muted" style="font-size: 0.75rem;">$<%= number_with_precision(@position.current_token0_value_usd, precision: 2) %></div>
+    <% end %>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label"><%= @position.token1_symbol || "Token1" %> Amount</div>
+    <div class="stat-value text-mono"><%= number_with_precision(@position.token1_amount || 0, precision: 6) %></div>
+    <% if @position.token1_price_usd %>
+      <div class="text-muted" style="font-size: 0.75rem;">$<%= number_with_precision(@position.current_token1_value_usd, precision: 2) %></div>
+    <% end %>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Total Value</div>
+    <div class="stat-value">$<%= number_with_delimiter(@position.total_value_usd.round(2)) %></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">LP Delta</div>
+    <div class="stat-value <%= @position.lp_delta_usd >= 0 ? 'text-green' : 'text-red' %>">
+      <%= @position.lp_delta_usd >= 0 ? '+' : '' %>$<%= number_with_delimiter(@position.lp_delta_usd.round(2)) %>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2 class="section-title">Position Details</h2>
+  <div class="card">
+    <div class="position-details">
+      <div class="position-detail">
+        <span class="detail-label">NFT ID</span>
+        <span class="detail-value text-mono"><%= @position.nft_id %></span>
+      </div>
+      <div class="position-detail">
+        <span class="detail-label">Pool</span>
+        <span class="detail-value text-mono" style="font-size: 0.75rem;"><%= @position.pool_address || "—" %></span>
+      </div>
+      <div class="position-detail">
+        <span class="detail-label">Tick Range</span>
+        <span class="detail-value text-mono"><%= @position.tick_lower || "?" %> - <%= @position.tick_upper || "?" %></span>
+      </div>
+      <div class="position-detail">
+        <span class="detail-label">Current Tick</span>
+        <span class="detail-value text-mono"><%= @position.current_tick&.to_i || "?" %></span>
+      </div>
+      <div class="position-detail">
+        <span class="detail-label">Range Status</span>
+        <% if @position.current_tick %>
+          <span class="range-status <%= @position.in_range? ? 'in-range' : 'out-of-range' %>">
+            <%= @position.in_range? ? 'In Range' : 'Out of Range' %>
+          </span>
+        <% else %>
+          <span class="text-muted">Unknown</span>
+        <% end %>
+      </div>
+      <div class="position-detail">
+        <span class="detail-label">Liquidity</span>
+        <span class="detail-value text-mono" style="font-size: 0.75rem;"><%= @position.liquidity || "—" %></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+    <h2 class="section-title" style="margin-bottom: 0; border-bottom: none; padding-bottom: 0;">Hedge Configuration</h2>
+    <%= link_to "Edit", edit_position_hedge_configuration_path(@position), class: "btn btn-sm btn-secondary" %>
+  </div>
+  <div class="card">
+    <div class="position-details">
+      <div class="position-detail">
+        <span class="detail-label">Hedge Ratio</span>
+        <span class="detail-value"><%= (@hedge_config.hedge_ratio * 100).round(0) %>%</span>
+      </div>
+      <div class="position-detail">
+        <span class="detail-label">Rebalance Threshold</span>
+        <span class="detail-value"><%= (@hedge_config.rebalance_threshold * 100).round(1) %>%</span>
+      </div>
+      <div class="position-detail">
+        <span class="detail-label">Auto Rebalance</span>
+        <span class="badge badge-<%= @hedge_config.auto_rebalance? ? 'success' : 'neutral' %>">
+          <%= @hedge_config.auto_rebalance? ? 'Enabled' : 'Disabled' %>
+        </span>
+      </div>
+    </div>
+
+    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+      <span class="detail-label" style="display: block; margin-bottom: 0.5rem;">Token Mappings</span>
+      <% if @position.token0_symbol %>
+        <div style="font-size: 0.875rem; margin-bottom: 0.25rem;">
+          <%= @position.token0_symbol %> &rarr;
+          <% mapping = @hedge_config.mapping_for(@position.token0_symbol) %>
+          <% if mapping %>
+            <span class="text-mono text-blue"><%= mapping %></span>
+          <% else %>
+            <span class="text-muted">Not hedged</span>
+          <% end %>
+        </div>
+      <% end %>
+      <% if @position.token1_symbol %>
+        <div style="font-size: 0.875rem;">
+          <%= @position.token1_symbol %> &rarr;
+          <% mapping = @hedge_config.mapping_for(@position.token1_symbol) %>
+          <% if mapping %>
+            <span class="text-mono text-blue"><%= mapping %></span>
+          <% else %>
+            <span class="text-muted">Not hedged</span>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2 class="section-title">Current Hedges</h2>
+  <% if @hedge_positions.empty? %>
+    <div class="card">
+      <p class="text-muted">No hedge positions yet.</p>
+    </div>
+  <% else %>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Asset</th>
+          <th>Size</th>
+          <th>Entry Price</th>
+          <th>Current Price</th>
+          <th>Unrealized PnL</th>
+          <th>Last Synced</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @hedge_positions.each do |hp| %>
+          <tr>
+            <td><strong><%= hp.asset %></strong></td>
+            <td class="text-mono"><%= number_with_precision(hp.size, precision: 6) %></td>
+            <td class="text-mono">$<%= number_with_precision(hp.entry_price || 0, precision: 2) %></td>
+            <td class="text-mono">$<%= number_with_precision(hp.current_price || 0, precision: 2) %></td>
+            <td class="text-mono <%= hp.unrealized_pnl && hp.unrealized_pnl >= 0 ? 'text-green' : 'text-red' %>">
+              <%= hp.unrealized_pnl ? "#{hp.unrealized_pnl >= 0 ? '+' : ''}$#{number_with_precision(hp.unrealized_pnl, precision: 2)}" : "—" %>
+            </td>
+            <td>
+              <% if hp.last_synced_at %>
+                <%= time_ago_in_words(hp.last_synced_at) %> ago
+              <% else %>
+                <span class="text-muted">Never</span>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+</div>
+
+<div class="section">
+  <h2 class="section-title">Hedge Analysis</h2>
+  <div class="card">
+    <% if @analysis.needs_rebalance %>
+      <div class="flash flash-alert" style="margin-bottom: 1rem;">
+        Rebalance needed: <%= @analysis.reason %>
+      </div>
+    <% else %>
+      <div class="flash flash-notice" style="margin-bottom: 1rem;">
+        <%= @analysis.reason %>
+      </div>
+    <% end %>
+
+    <div style="margin-bottom: 1rem;">
+      <span class="detail-label">Drift</span>
+      <div class="drift-indicator" style="max-width: 300px;">
+        <div class="drift-bar">
+          <% drift_percent = [(@analysis.drift_percent * 100).round, 100].min %>
+          <% drift_class = drift_percent < 3 ? 'low' : drift_percent < 5 ? 'medium' : 'high' %>
+          <div class="drift-fill <%= drift_class %>" style="width: <%= drift_percent %>%;"></div>
+        </div>
+        <span class="text-mono"><%= (@analysis.drift_percent * 100).round(2) %>%</span>
+      </div>
+    </div>
+
+    <% if @adjustments.any? %>
+      <span class="detail-label" style="display: block; margin-bottom: 0.5rem;">Required Adjustments</span>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Asset</th>
+            <th>Current</th>
+            <th>Target</th>
+            <th>Delta</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @adjustments.each do |adj| %>
+            <tr>
+              <td><strong><%= adj[:asset] %></strong></td>
+              <td class="text-mono"><%= number_with_precision(adj[:current_size], precision: 6) %></td>
+              <td class="text-mono"><%= number_with_precision(adj[:target_size], precision: 6) %></td>
+              <td class="text-mono <%= adj[:delta] >= 0 ? 'text-green' : 'text-red' %>">
+                <%= adj[:delta] >= 0 ? '+' : '' %><%= number_with_precision(adj[:delta], precision: 6) %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% end %>
+  </div>
+</div>
+
+<% if @rebalance_events.any? %>
+  <div class="section">
+    <h2 class="section-title">Recent Rebalance History</h2>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Trigger</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @rebalance_events.each do |event| %>
+          <tr>
+            <td><%= event.created_at.strftime("%Y-%m-%d %H:%M") %></td>
+            <td>
+              <span class="badge badge-neutral"><%= event.trigger_type.capitalize %></span>
+              <% if event.paper_trade? %>
+                <span class="badge badge-info">Paper</span>
+              <% end %>
+            </td>
+            <td>
+              <span class="badge badge-<%= event.status == 'completed' ? 'success' : event.status == 'failed' ? 'danger' : 'warning' %>">
+                <%= event.status.capitalize %>
+              </span>
+            </td>
+            <td>
+              <%= link_to "Details", rebalance_event_path(event), class: "btn btn-sm btn-secondary" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+<% end %>
+
+<% if @realized_pnls.any? %>
+  <div class="section">
+    <h2 class="section-title">Realized PnL</h2>
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Asset</th>
+          <th>Size Closed</th>
+          <th>Entry</th>
+          <th>Exit</th>
+          <th>PnL</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @realized_pnls.each do |pnl| %>
+          <tr>
+            <td><%= pnl.created_at.strftime("%Y-%m-%d %H:%M") %></td>
+            <td><%= pnl.asset %></td>
+            <td class="text-mono"><%= number_with_precision(pnl.size_closed, precision: 6) %></td>
+            <td class="text-mono">$<%= number_with_precision(pnl.entry_price, precision: 2) %></td>
+            <td class="text-mono">$<%= number_with_precision(pnl.exit_price, precision: 2) %></td>
+            <td class="text-mono <%= pnl.realized_pnl >= 0 ? 'text-green' : 'text-red' %>">
+              <%= pnl.realized_pnl >= 0 ? '+' : '' %>$<%= number_with_precision(pnl.realized_pnl, precision: 2) %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+    <p class="text-muted" style="margin-top: 0.5rem;">
+      Total Realized:
+      <span class="<%= @position.total_realized_pnl >= 0 ? 'text-green' : 'text-red' %>">
+        <%= @position.total_realized_pnl >= 0 ? '+' : '' %>$<%= number_with_delimiter(@position.total_realized_pnl.round(2)) %>
+      </span>
+    </p>
+  </div>
+<% end %>

@@ -1,0 +1,40 @@
+{
+  "position": {
+    "id": "123456",
+    "owner": "0x1234567890123456789012345678901234567890",
+    "liquidity": "1000000000000000000",
+    "depositedToken0": "10.0",
+    "depositedToken1": "15000.0",
+    "withdrawnToken0": "0",
+    "withdrawnToken1": "0",
+    "collectedFeesToken0": "0.1",
+    "collectedFeesToken1": "10.0",
+    "tickLower": {
+      "tickIdx": "-100000"
+    },
+    "tickUpper": {
+      "tickIdx": "100000"
+    },
+    "pool": {
+      "id": "0xpool1",
+      "tick": "0",
+      "sqrtPrice": "79228162514264337593543950336",
+      "token0Price": "0.0005",
+      "token1Price": "2000.0",
+      "feeTier": "3000",
+      "liquidity": "100000000000000000000"
+    },
+    "token0": {
+      "id": "0xweth",
+      "symbol": "WETH",
+      "name": "Wrapped Ether",
+      "decimals": "18"
+    },
+    "token1": {
+      "id": "0xusdc",
+      "symbol": "USDC",
+      "name": "USD Coin",
+      "decimals": "6"
+    }
+  }
+}

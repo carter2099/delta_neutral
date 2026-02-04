@@ -1,0 +1,17 @@
+eth_usdc_config:
+  position: eth_usdc
+  hedge_ratio: 1.0
+  rebalance_threshold: 0.05
+  auto_rebalance: false
+  token_mappings:
+    WETH: ETH
+    USDC: null
+
+arb_eth_config:
+  position: arb_eth
+  hedge_ratio: 0.8
+  rebalance_threshold: 0.1
+  auto_rebalance: true
+  token_mappings:
+    ARB: ARB
+    WETH: ETH

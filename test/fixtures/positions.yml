@@ -1,0 +1,35 @@
+eth_usdc:
+  user: one
+  nft_id: "123456"
+  network: ethereum
+  pool_address: "0xpool1"
+  token0_address: "0xweth"
+  token1_address: "0xusdc"
+  token0_symbol: WETH
+  token1_symbol: USDC
+  token0_decimals: 18
+  token1_decimals: 6
+  tick_lower: -100000
+  tick_upper: 100000
+  liquidity: "1000000000000000000"
+  token0_amount: 10.0
+  token1_amount: 15000.0
+  current_tick: 0
+  token0_price_usd: 2000.0
+  token1_price_usd: 1.0
+  initial_token0_value_usd: 18000.0
+  initial_token1_value_usd: 15000.0
+  active: true
+  last_synced_at: <%= 5.minutes.ago %>
+
+arb_eth:
+  user: one
+  nft_id: "789"
+  network: arbitrum
+  token0_symbol: ARB
+  token1_symbol: WETH
+  token0_decimals: 18
+  token1_decimals: 18
+  token0_amount: 1000.0
+  token1_amount: 0.5
+  active: true

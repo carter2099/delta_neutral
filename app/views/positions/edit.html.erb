@@ -1,0 +1,45 @@
+<div class="page-header">
+  <h1 class="page-title">Edit Position</h1>
+</div>
+
+<div class="card" style="max-width: 600px;">
+  <%= form_with model: @position, local: true do |f| %>
+    <% if @position.errors.any? %>
+      <div class="flash flash-alert" style="margin-bottom: 1rem;">
+        <ul style="margin: 0; padding-left: 1rem;">
+          <% @position.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="form-group">
+      <%= f.label :nft_id, "NFT Token ID", class: "form-label" %>
+      <%= f.text_field :nft_id, class: "form-input", disabled: true %>
+      <p class="form-hint">Cannot change NFT ID after creation</p>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :network, class: "form-label" %>
+      <%= f.select :network, [["Ethereum Mainnet", "ethereum"], ["Arbitrum", "arbitrum"]], {}, class: "form-select", disabled: true %>
+    </div>
+
+    <div class="form-group">
+      <div class="form-checkbox">
+        <%= f.check_box :active %>
+        <%= f.label :active, "Active", class: "form-label", style: "margin-bottom: 0;" %>
+      </div>
+      <p class="form-hint">Inactive positions won't be synced or trigger rebalances</p>
+    </div>
+
+    <div class="btn-group">
+      <%= f.submit "Update Position", class: "btn btn-primary" %>
+      <%= link_to "Cancel", position_path(@position), class: "btn btn-secondary" %>
+    </div>
+  <% end %>
+
+  <div style="margin-top: 2rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+    <%= link_to "Deactivate Position", position_path(@position), method: :delete, class: "btn btn-danger", data: { confirm: "Are you sure you want to deactivate this position?" } %>
+  </div>
+</div>

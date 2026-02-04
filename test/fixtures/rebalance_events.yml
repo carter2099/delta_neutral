@@ -1,0 +1,38 @@
+completed_rebalance:
+  position: eth_usdc
+  status: completed
+  trigger_type: manual
+  paper_trade: true
+  pre_state:
+    token0_amount: 10.0
+    token1_amount: 15000.0
+    hedge_positions: []
+  post_state:
+    token0_amount: 10.0
+    token1_amount: 15000.0
+    hedge_positions:
+      - asset: ETH
+        size: -10.0
+        entry_price: 2000.0
+  intended_actions:
+    - asset: ETH
+      current_size: 0
+      target_size: -10.0
+      delta: -10.0
+  executed_actions:
+    - asset: ETH
+      action: short
+      size: -10.0
+      simulated: true
+      success: true
+  started_at: <%= 1.hour.ago %>
+  completed_at: <%= 1.hour.ago + 2.seconds %>
+
+failed_rebalance:
+  position: eth_usdc
+  status: failed
+  trigger_type: scheduled
+  paper_trade: false
+  error_message: "Connection timeout"
+  started_at: <%= 30.minutes.ago %>
+  completed_at: <%= 30.minutes.ago + 5.seconds %>

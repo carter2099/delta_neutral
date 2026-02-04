@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title><%= content_for(:title) || "Delta Neutral" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Delta Neutral">
+    <meta name="mobile-web-app-capable" content="yes">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body>
+    <% if current_user %>
+      <header class="header">
+        <div class="container header-inner">
+          <%= link_to "Delta Neutral", root_path, class: "logo" %>
+          <nav class="nav">
+            <%= link_to "Dashboard", root_path, class: current_page?(root_path) ? "active" : "" %>
+            <%= link_to "Positions", positions_path, class: controller_name == "positions" ? "active" : "" %>
+            <%= link_to "History", rebalance_events_path, class: controller_name == "rebalance_events" ? "active" : "" %>
+            <%= link_to "Settings", settings_path, class: controller_name == "settings" ? "active" : "" %>
+            <%= button_to "Logout", session_path, method: :delete, class: "btn btn-sm btn-secondary" %>
+          </nav>
+        </div>
+      </header>
+    <% end %>
+
+    <main class="main">
+      <div class="container">
+        <% if notice %>
+          <div class="flash flash-notice"><%= notice %></div>
+        <% end %>
+        <% if alert %>
+          <div class="flash flash-alert"><%= alert %></div>
+        <% end %>
+        <%= yield %>
+      </div>
+    </main>
+  </body>
+</html>

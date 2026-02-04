@@ -1,0 +1,9 @@
+eth_realized:
+  position: eth_usdc
+  rebalance_event: completed_rebalance
+  asset: ETH
+  size_closed: -2.0
+  entry_price: 1900.0
+  exit_price: 2000.0
+  realized_pnl: -200.0
+  fees: 5.0

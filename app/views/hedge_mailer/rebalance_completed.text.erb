@@ -1,0 +1,19 @@
+REBALANCE <%= @event.paper_trade? ? 'SIMULATED' : 'COMPLETED' %>
+<%= "=" * (@event.paper_trade? ? 20 : 19) %>
+
+Rebalance completed successfully for <%= @position.token0_symbol %>/<%= @position.token1_symbol %>
+
+Position: <%= @position.token0_symbol %>/<%= @position.token1_symbol %> on <%= @position.network.capitalize %>
+Trigger: <%= @event.trigger_type.capitalize %>
+<% if @event.duration %>
+Duration: <%= number_with_precision(@event.duration, precision: 2) %>s
+<% end %>
+
+<% if @event.executed_actions.any? %>
+Actions <%= @event.paper_trade? ? 'Simulated' : 'Executed' %>:
+<% @event.executed_actions.each do |action| %>
+  - <%= action["asset"] %>: <%= action["action"] %> <%= number_with_precision(action["size"] || 0, precision: 6) %>
+<% end %>
+<% end %>
+
+View details: <%= rebalance_event_url(@event) %>

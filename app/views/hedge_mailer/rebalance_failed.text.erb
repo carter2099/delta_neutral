@@ -1,0 +1,16 @@
+REBALANCE FAILED
+================
+
+Rebalance failed for <%= @position.token0_symbol %>/<%= @position.token1_symbol %>
+
+Position: <%= @position.token0_symbol %>/<%= @position.token1_symbol %> on <%= @position.network.capitalize %>
+Trigger: <%= @event.trigger_type.capitalize %>
+
+<% if @event.error_message.present? %>
+Error:
+<%= @event.error_message %>
+<% end %>
+
+Please check the error and try again. If the problem persists, check the circuit breaker status in Settings.
+
+View details: <%= rebalance_event_url(@event) %>

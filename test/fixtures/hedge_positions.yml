@@ -1,0 +1,10 @@
+eth_usdc_eth_hedge:
+  position: eth_usdc
+  asset: ETH
+  size: -9.5
+  entry_price: 1950.0
+  current_price: 2000.0
+  unrealized_pnl: -50.0
+  liquidation_price: 4000.0
+  margin_used: 2000.0
+  last_synced_at: <%= 2.minutes.ago %>

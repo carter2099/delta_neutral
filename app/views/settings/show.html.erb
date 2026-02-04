@@ -1,0 +1,110 @@
+<div class="page-header">
+  <h1 class="page-title">Settings</h1>
+</div>
+
+<div class="card" style="max-width: 600px; margin-bottom: 1.5rem;">
+  <%= form_with model: @user, url: settings_path, method: :patch, local: true do |f| %>
+    <% if @user.errors.any? %>
+      <div class="flash flash-alert" style="margin-bottom: 1rem;">
+        <ul style="margin: 0; padding-left: 1rem;">
+          <% @user.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <h3 style="font-size: 1rem; margin-bottom: 1rem;">Wallet</h3>
+
+    <div class="form-group">
+      <%= f.label :wallet_address, "Wallet Address", class: "form-label" %>
+      <%= f.text_field :wallet_address, class: "form-input", placeholder: "0x..." %>
+      <p class="form-hint">Your Ethereum wallet address (for fetching positions by owner)</p>
+    </div>
+
+    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+      <h3 style="font-size: 1rem; margin-bottom: 1rem;">Trading Mode</h3>
+
+      <div class="form-group">
+        <div class="form-checkbox">
+          <%= f.check_box :paper_trading_mode %>
+          <%= f.label :paper_trading_mode, "Paper Trading Mode", class: "form-label", style: "margin-bottom: 0;" %>
+        </div>
+        <p class="form-hint">When enabled, rebalances will be simulated without executing real orders</p>
+      </div>
+
+      <div class="form-group">
+        <div class="form-checkbox">
+          <%= f.check_box :testnet_mode %>
+          <%= f.label :testnet_mode, "Use Hyperliquid Testnet", class: "form-label", style: "margin-bottom: 0;" %>
+        </div>
+        <p class="form-hint">Connect to Hyperliquid testnet instead of mainnet</p>
+      </div>
+
+      <div class="form-group">
+        <div class="form-checkbox">
+          <%= f.check_box :auto_rebalance_enabled %>
+          <%= f.label :auto_rebalance_enabled, "Enable Auto-Rebalance", class: "form-label", style: "margin-bottom: 0;" %>
+        </div>
+        <p class="form-hint">Allow automatic rebalancing when thresholds are exceeded (positions must also have auto-rebalance enabled)</p>
+      </div>
+    </div>
+
+    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+      <h3 style="font-size: 1rem; margin-bottom: 1rem;">Notifications</h3>
+
+      <div class="form-group">
+        <%= f.label :notification_email, "Notification Email", class: "form-label" %>
+        <%= f.email_field :notification_email, class: "form-input", placeholder: "your@email.com" %>
+        <p class="form-hint">Receive alerts when positions need rebalancing or when rebalances complete/fail</p>
+      </div>
+    </div>
+
+    <div class="btn-group" style="margin-top: 1.5rem;">
+      <%= f.submit "Save Settings", class: "btn btn-primary" %>
+    </div>
+  <% end %>
+</div>
+
+<div class="card" style="max-width: 600px; margin-bottom: 1.5rem;">
+  <h3 style="font-size: 1rem; margin-bottom: 1rem;">Hyperliquid API</h3>
+  <p class="text-muted" style="font-size: 0.875rem; margin-bottom: 1rem;">
+    Your Hyperliquid private key is stored securely in Rails credentials.
+    To update it, run: <code>bin/rails credentials:edit</code>
+  </p>
+  <pre style="background: var(--bg-primary); padding: 0.75rem; border-radius: 4px; font-size: 0.75rem; overflow-x: auto;">hyperliquid:
+  private_key: "your_private_key_here"
+  wallet_address: "0x..."</pre>
+</div>
+
+<div class="card" style="max-width: 600px;">
+  <h3 style="font-size: 1rem; margin-bottom: 1rem;">Circuit Breaker</h3>
+
+  <div class="position-details">
+    <div class="position-detail">
+      <span class="detail-label">Status</span>
+      <span class="badge badge-<%= @circuit_breaker.open? ? 'danger' : 'success' %>">
+        <%= @circuit_breaker.open? ? 'Open (Trading Halted)' : 'Closed (Trading Enabled)' %>
+      </span>
+    </div>
+    <div class="position-detail">
+      <span class="detail-label">Consecutive Failures</span>
+      <span class="detail-value"><%= @circuit_breaker.failures %> / 3</span>
+    </div>
+    <% if @circuit_breaker.status[:will_reset_at] %>
+      <div class="position-detail">
+        <span class="detail-label">Will Reset At</span>
+        <span class="detail-value"><%= @circuit_breaker.status[:will_reset_at].strftime("%H:%M:%S") %></span>
+      </div>
+    <% end %>
+  </div>
+
+  <p class="text-muted" style="font-size: 0.875rem; margin-top: 1rem;">
+    The circuit breaker automatically halts trading after 3 consecutive failures to prevent runaway errors.
+    It automatically resets after 30 minutes.
+  </p>
+
+  <% if @circuit_breaker.failures > 0 %>
+    <%= link_to "Reset Circuit Breaker", settings_reset_circuit_breaker_path, method: :post, class: "btn btn-secondary btn-sm", style: "margin-top: 0.5rem;" %>
+  <% end %>
+</div>

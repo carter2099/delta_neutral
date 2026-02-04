@@ -1,0 +1,65 @@
+<div class="page-header">
+  <h1 class="page-title">Positions</h1>
+  <%= link_to "Add Position", new_position_path, class: "btn btn-primary" %>
+</div>
+
+<% if @positions.empty? %>
+  <div class="empty-state">
+    <h3>No positions yet</h3>
+    <p>Add your first Uniswap V3 position to start tracking.</p>
+    <%= link_to "Add Position", new_position_path, class: "btn btn-primary" %>
+  </div>
+<% else %>
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Pair</th>
+        <th>Network</th>
+        <th>NFT ID</th>
+        <th>Value</th>
+        <th>Status</th>
+        <th>Last Synced</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @positions.each do |position| %>
+        <tr>
+          <td>
+            <%= link_to position_path(position) do %>
+              <strong><%= position.token0_symbol || "?" %>/<%= position.token1_symbol || "?" %></strong>
+            <% end %>
+          </td>
+          <td><span class="badge badge-neutral"><%= position.network.capitalize %></span></td>
+          <td class="text-mono"><%= position.nft_id %></td>
+          <td class="text-mono">$<%= number_with_delimiter(position.total_value_usd.round(2)) %></td>
+          <td>
+            <% if position.active? %>
+              <span class="badge badge-success">Active</span>
+            <% else %>
+              <span class="badge badge-neutral">Inactive</span>
+            <% end %>
+            <% if position.current_tick %>
+              <span class="range-status <%= position.in_range? ? 'in-range' : 'out-of-range' %>">
+                <%= position.in_range? ? 'In Range' : 'Out of Range' %>
+              </span>
+            <% end %>
+          </td>
+          <td>
+            <% if position.last_synced_at %>
+              <%= time_ago_in_words(position.last_synced_at) %> ago
+            <% else %>
+              <span class="text-muted">Never</span>
+            <% end %>
+          </td>
+          <td>
+            <div class="btn-group">
+              <%= link_to "View", position_path(position), class: "btn btn-sm btn-secondary" %>
+              <%= link_to "Sync", sync_position_path(position), method: :post, class: "btn btn-sm btn-secondary" %>
+            </div>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% end %>

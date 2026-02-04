@@ -1,0 +1,17 @@
+<% password_digest = BCrypt::Password.create("password") %>
+
+one:
+  email_address: one@example.com
+  password_digest: <%= password_digest %>
+  wallet_address: "0x1234567890123456789012345678901234567890"
+  paper_trading_mode: true
+  testnet_mode: true
+  auto_rebalance_enabled: false
+  notification_email: one@example.com
+
+two:
+  email_address: two@example.com
+  password_digest: <%= password_digest %>
+  paper_trading_mode: false
+  testnet_mode: false
+  auto_rebalance_enabled: true

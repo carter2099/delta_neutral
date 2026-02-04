@@ -1,0 +1,23 @@
+REBALANCE ALERT
+===============
+
+Your <%= @position.token0_symbol %>/<%= @position.token1_symbol %> position on <%= @position.network.capitalize %> needs rebalancing.
+
+<%= @analysis.reason %>
+
+Position: <%= @position.token0_symbol %>/<%= @position.token1_symbol %>
+Drift: <%= (@analysis.drift_percent * 100).round(2) %>%
+Threshold: <%= (@position.hedge_configuration.rebalance_threshold * 100).round(1) %>%
+
+<% if @analysis.adjustments.any? %>
+Required Adjustments:
+<% @analysis.adjustments.each do |adj| %>
+  - <%= adj[:asset] %>: <%= number_with_precision(adj[:delta], precision: 6) %>
+<% end %>
+<% end %>
+
+<% if @position.hedge_configuration.auto_rebalance? && @user.auto_rebalance_enabled? %>
+Auto-rebalance is enabled. A rebalance will be executed automatically.
+<% else %>
+View position: <%= position_url(@position) %>
+<% end %>

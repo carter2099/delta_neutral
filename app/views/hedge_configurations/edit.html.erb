@@ -1,0 +1,81 @@
+<div class="page-header">
+  <h1 class="page-title">Edit Hedge Configuration</h1>
+</div>
+
+<p class="text-muted" style="margin-bottom: 1.5rem;">
+  Configure how the <%= @position.token0_symbol %>/<%= @position.token1_symbol %> position should be hedged.
+</p>
+
+<div class="card" style="max-width: 600px;">
+  <%= form_with model: @hedge_configuration, url: position_hedge_configuration_path(@position), method: :patch, local: true do |f| %>
+    <% if @hedge_configuration.errors.any? %>
+      <div class="flash flash-alert" style="margin-bottom: 1rem;">
+        <ul style="margin: 0; padding-left: 1rem;">
+          <% @hedge_configuration.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="form-group">
+      <%= f.label :hedge_ratio, "Hedge Ratio", class: "form-label" %>
+      <%= f.number_field :hedge_ratio, class: "form-input", step: 0.01, min: 0, max: 2 %>
+      <p class="form-hint">1.0 = 100% hedge (fully delta neutral). 0.5 = 50% hedge.</p>
+    </div>
+
+    <div class="form-group">
+      <%= f.label :rebalance_threshold, "Rebalance Threshold", class: "form-label" %>
+      <%= f.number_field :rebalance_threshold, class: "form-input", step: 0.01, min: 0.01, max: 1 %>
+      <p class="form-hint">Trigger rebalance when drift exceeds this percentage. 0.05 = 5%</p>
+    </div>
+
+    <div class="form-group">
+      <div class="form-checkbox">
+        <%= f.check_box :auto_rebalance %>
+        <%= f.label :auto_rebalance, "Auto Rebalance", class: "form-label", style: "margin-bottom: 0;" %>
+      </div>
+      <p class="form-hint">Automatically rebalance when threshold is exceeded (requires global auto-rebalance to be enabled in Settings)</p>
+    </div>
+
+    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+      <h3 style="font-size: 1rem; margin-bottom: 1rem;">Token Mappings</h3>
+      <p class="form-hint" style="margin-bottom: 1rem;">Map LP tokens to Hyperliquid perpetual symbols. Leave blank to not hedge that token.</p>
+
+      <% if @position.token0_symbol %>
+        <div class="form-group">
+          <%= label_tag "token_mappings_#{@position.token0_symbol}", @position.token0_symbol, class: "form-label" %>
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <span class="text-muted">&rarr;</span>
+            <%= select_tag "hedge_configuration[token_mappings][#{@position.token0_symbol}]",
+                options_for_select(
+                  [["Don't hedge", ""]] + @available_perps.map { |p| [p, p] },
+                  @hedge_configuration.mapping_for(@position.token0_symbol)
+                ),
+                class: "form-select" %>
+          </div>
+        </div>
+      <% end %>
+
+      <% if @position.token1_symbol %>
+        <div class="form-group">
+          <%= label_tag "token_mappings_#{@position.token1_symbol}", @position.token1_symbol, class: "form-label" %>
+          <div style="display: flex; gap: 0.5rem; align-items: center;">
+            <span class="text-muted">&rarr;</span>
+            <%= select_tag "hedge_configuration[token_mappings][#{@position.token1_symbol}]",
+                options_for_select(
+                  [["Don't hedge", ""]] + @available_perps.map { |p| [p, p] },
+                  @hedge_configuration.mapping_for(@position.token1_symbol)
+                ),
+                class: "form-select" %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+
+    <div class="btn-group" style="margin-top: 1.5rem;">
+      <%= f.submit "Save Configuration", class: "btn btn-primary" %>
+      <%= link_to "Cancel", position_path(@position), class: "btn btn-secondary" %>
+    </div>
+  <% end %>
+</div>
