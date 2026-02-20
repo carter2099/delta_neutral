@@ -5,7 +5,9 @@
   </div>
   <div class="flex items-center space-x-3">
     <%= button_to "Sync Now", sync_now_position_path(@position), method: :post, class: "bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition" %>
-    <% unless @position.hedge %>
+    <% if @position.hedge %>
+      <%= link_to "View Hedge", hedge_path(@position.hedge), class: "bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition" %>
+    <% else %>
       <%= link_to "Create Hedge", new_hedge_path(position_id: @position.id), class: "bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition" %>
     <% end %>
   </div>

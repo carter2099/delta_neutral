@@ -1,3 +1,10 @@
+<div class="mb-4">
+  <%= link_to position_path(@hedge.position), class: "text-gray-400 hover:text-white transition text-sm font-medium inline-flex items-center space-x-1" do %>
+    <span>&larr;</span>
+    <span>Back to Position</span>
+  <% end %>
+</div>
+
 <div class="flex items-center justify-between mb-8">
   <div>
     <h1 class="text-3xl font-bold text-white">Hedge: <%= @hedge.position.asset0 %>/<%= @hedge.position.asset1 %></h1>

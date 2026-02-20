@@ -1,0 +1,39 @@
+<h1 class="text-2xl font-bold text-white mb-6">Settings</h1>
+
+<div class="bg-gray-900 rounded-xl border border-gray-800 p-6 max-w-lg">
+  <%= form_with(model: @setting, url: settings_path, method: :patch, class: "space-y-6") do |f| %>
+    <% if @setting.errors.any? %>
+      <div class="rounded-lg bg-red-900/50 border border-red-700 p-4 text-red-300 text-sm">
+        <% @setting.errors.full_messages.each do |msg| %>
+          <p><%= msg %></p>
+        <% end %>
+      </div>
+    <% end %>
+
+    <h2 class="text-lg font-semibold text-gray-200">Hyperliquid</h2>
+
+    <div>
+      <%= f.label :hyperliquid_leverage, "Leverage", class: "block text-sm font-medium text-gray-300 mb-2" %>
+      <%= f.number_field :hyperliquid_leverage, step: 1, min: 1, max: 50, class: "w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" %>
+      <p class="text-gray-500 text-xs mt-1">Leverage multiplier for short positions (1x–50x)</p>
+    </div>
+
+    <div>
+      <%= f.label :hyperliquid_cross_margin, "Margin Mode", class: "block text-sm font-medium text-gray-300 mb-2" %>
+      <div class="flex items-center space-x-6">
+        <label class="flex items-center space-x-2 cursor-pointer">
+          <%= f.radio_button :hyperliquid_cross_margin, true, class: "w-4 h-4 bg-gray-800 border-gray-700 text-blue-600 focus:ring-blue-500" %>
+          <span class="text-sm text-gray-300">Cross</span>
+        </label>
+        <label class="flex items-center space-x-2 cursor-pointer">
+          <%= f.radio_button :hyperliquid_cross_margin, false, class: "w-4 h-4 bg-gray-800 border-gray-700 text-blue-600 focus:ring-blue-500" %>
+          <span class="text-sm text-gray-300">Isolated</span>
+        </label>
+      </div>
+    </div>
+
+    <div>
+      <%= f.submit "Save Settings", class: "bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg text-sm font-medium transition cursor-pointer" %>
+    </div>
+  <% end %>
+</div>

@@ -28,9 +28,9 @@
             <div class="flex items-center space-x-8">
               <span class="text-xl font-bold text-white tracking-tight">Delta Neutral</span>
               <%= link_to "Dashboard", root_path, class: "text-gray-300 hover:text-white transition text-sm font-medium" %>
-              <%= link_to "Wallets", wallets_path, class: "text-gray-300 hover:text-white transition text-sm font-medium" %>
               <%= link_to "Positions", positions_path, class: "text-gray-300 hover:text-white transition text-sm font-medium" %>
-              <%= link_to "Hedges", hedges_path, class: "text-gray-300 hover:text-white transition text-sm font-medium" %>
+              <%= link_to "Wallets", wallets_path, class: "text-gray-300 hover:text-white transition text-sm font-medium" %>
+              <%= link_to "Settings", edit_settings_path, class: "text-gray-300 hover:text-white transition text-sm font-medium" %>
             </div>
             <div class="flex items-center space-x-4">
               <span class="text-gray-400 text-sm"><%= Current.user.first_name %> <%= Current.user.last_name %></span>

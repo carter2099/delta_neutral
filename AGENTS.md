@@ -94,6 +94,11 @@ app/
 └── views/          # Tailwind dark-themed UI
 ```
 
+## Debugging
+
+- **Check logs, but verify they're recent.** `log/development.log` contains job output, service errors, and stack traces. All processes (web, jobs, css) write to the same log, so entries can interleave. Always check timestamps to ensure you're reading logs from the current session, not stale entries from a previous run. Grep for the job or service name (e.g., `HedgeSyncJob`, `HyperliquidService`) to trace execution flow.
+- **Query the database.** Use `bin/rails runner` to inspect model state directly (e.g., `ShortRebalance.order(created_at: :desc).limit(5)`, `Hedge.active`, `Position.find(1)`). This is often faster and more reliable than parsing logs.
+
 ## Code Quality Guidelines
 
 These rules prevent common AI-generated code issues. Follow them strictly.

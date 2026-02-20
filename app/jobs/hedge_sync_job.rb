@@ -42,6 +42,15 @@ class HedgeSyncJob < ApplicationJob
     Rails.logger.debug { "[HedgeSyncJob] complete" }
   end
 
+  # Maps wrapped token symbols from Uniswap to Hyperliquid trading symbols.
+  HYPERLIQUID_SYMBOL_MAP = {
+    "WETH" => "ETH",
+    "WBTC" => "BTC",
+    "WMATIC" => "MATIC",
+    "WAVAX" => "AVAX",
+    "WSOL" => "SOL"
+  }.freeze
+
   private
 
   # Checks and rebalances both assets for a hedge, if the position is active.
@@ -78,10 +87,12 @@ class HedgeSyncJob < ApplicationJob
   # @param hyperliquid [HyperliquidService] configured Hyperliquid client
   # @return [void]
   def check_and_rebalance(hedge, asset, pool_amount, hyperliquid)
-    Rails.logger.debug { "[HedgeSyncJob] hedge #{hedge.id} #{asset}: pool_amount=#{pool_amount}" }
-    current_position = hyperliquid.get_position(asset)
+    hl_asset = HYPERLIQUID_SYMBOL_MAP.fetch(asset, asset)
+    Rails.logger.debug { "[HedgeSyncJob] hedge #{hedge.id} #{asset} (hl: #{hl_asset}): pool_amount=#{pool_amount}" }
+    current_position = hyperliquid.get_position(hl_asset)
     current_short = current_position ? current_position[:size].abs : BigDecimal("0")
-    target_short = pool_amount * hedge.target
+    decimals = hyperliquid.sz_decimals(hl_asset)
+    target_short = (pool_amount * hedge.target).floor(decimals)
 
     Rails.logger.debug { "[HedgeSyncJob] hedge #{hedge.id} #{asset}: current_short=#{current_short}, target_short=#{target_short}" }
 
@@ -97,15 +108,20 @@ class HedgeSyncJob < ApplicationJob
     if current_short > 0
       Rails.logger.debug { "[HedgeSyncJob] hedge #{hedge.id} #{asset}: closing existing short (size=#{current_short})" }
       before_close = Time.current
-      hyperliquid.close_short(asset: asset)
-      realized_pnl = fetch_realized_pnl(hyperliquid, asset, before_close)
+      hyperliquid.close_short(asset: hl_asset)
+      realized_pnl = fetch_realized_pnl(hyperliquid, hl_asset, before_close)
       Rails.logger.debug { "[HedgeSyncJob] hedge #{hedge.id} #{asset}: realized_pnl=#{realized_pnl}" }
     end
 
     # Open new short at target size (not needed when target or pool amt is 0)
     if target_short > 0
+      setting = hedge.position.user.setting
+      leverage = setting&.hyperliquid_leverage || 3
+      is_cross = setting&.hyperliquid_cross_margin.nil? ? true : setting.hyperliquid_cross_margin
+      Rails.logger.debug { "[HedgeSyncJob] hedge #{hedge.id} #{asset}: setting leverage=#{leverage}, is_cross=#{is_cross}" }
+      hyperliquid.set_leverage(asset: hl_asset, leverage: leverage, is_cross: is_cross)
       Rails.logger.debug { "[HedgeSyncJob] hedge #{hedge.id} #{asset}: opening new short (size=#{target_short})" }
-      hyperliquid.open_short(asset: asset, size: target_short)
+      hyperliquid.open_short(asset: hl_asset, size: target_short)
     else
       Rails.logger.debug { "[HedgeSyncJob] hedge #{hedge.id} #{asset}: target is zero, skipping open" }
     end

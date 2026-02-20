@@ -1,0 +1,4 @@
+one:
+  user: one
+  hyperliquid_leverage: 3
+  hyperliquid_cross_margin: true

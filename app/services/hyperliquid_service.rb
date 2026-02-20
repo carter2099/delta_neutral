@@ -9,6 +9,9 @@
 #   service = HyperliquidService.new
 #   service.open_short(asset: "ETH", size: BigDecimal("0.5"))
 class HyperliquidService
+  # Raised when a Hyperliquid order is rejected (e.g. below minimum value).
+  class OrderError < StandardError; end
+
   # @param private_key [String, nil] Hyperliquid signing key; falls back to
   #   +HYPERLIQUID_PRIVATE_KEY+
   # @param wallet_address [String, nil] wallet address for queries; falls back
@@ -30,6 +33,7 @@ class HyperliquidService
     Rails.logger.debug { "[HyperliquidService] open_short: asset=#{asset}, size=#{size}" }
     result = sdk.exchange.market_order(coin: asset, is_buy: false, size: size)
     Rails.logger.debug { "[HyperliquidService] open_short result: #{result.inspect.truncate(200)}" }
+    validate_order_response!(result)
     result
   end
 
@@ -94,6 +98,24 @@ class HyperliquidService
     pos ? pos[:unrealized_pnl] : BigDecimal("0")
   end
 
+  # Returns the size decimal precision for a given asset.
+  #
+  # Fetches and caches the metadata for all perp assets on first call.
+  #
+  # @param asset [String] the coin symbol (e.g. +"ETH"+)
+  # @return [Integer] the number of decimal places allowed for order sizes
+  def sz_decimals(asset)
+    @sz_decimals_cache ||= begin
+      meta = sdk.info.meta
+      (meta["universe"] || []).each_with_object({}) do |a, h|
+        h[a["name"]] = a["szDecimals"]
+      end
+    end
+    @sz_decimals_cache.fetch(asset) do
+      raise ArgumentError, "Unknown asset or no szDecimals available: #{asset}"
+    end
+  end
+
   # Returns all fills for the wallet since the given timestamp.
   #
   # @param start_time [Time] only return fills at or after this time
@@ -105,7 +127,38 @@ class HyperliquidService
     fills
   end
 
+  # Updates leverage and margin mode for an asset before placing orders.
+  #
+  # @param asset [String] the coin symbol (e.g. +"ETH"+)
+  # @param leverage [Integer] desired leverage multiplier
+  # @param is_cross [Boolean] +true+ for cross margin, +false+ for isolated
+  # @return [Hash] the SDK response
+  def set_leverage(asset:, leverage:, is_cross:)
+    Rails.logger.debug { "[HyperliquidService] set_leverage: asset=#{asset}, leverage=#{leverage}, is_cross=#{is_cross}" }
+    result = sdk.exchange.update_leverage(coin: asset, leverage: leverage, is_cross: is_cross)
+    Rails.logger.debug { "[HyperliquidService] set_leverage result: #{result.inspect.truncate(200)}" }
+    result
+  end
+
   private
+
+  # Raises if the Hyperliquid order response contains an error status.
+  #
+  # The SDK returns +"status" => "ok"+ even when individual order statuses
+  # contain errors (e.g. minimum value violations). This method checks for
+  # those nested errors and raises an +OrderError+ so callers don't
+  # silently treat failed orders as successful.
+  #
+  # @param result [Hash] the SDK response from a market order
+  # @raise [OrderError] if any order status contains an error
+  # @return [void]
+  def validate_order_response!(result)
+    statuses = result.dig("response", "data", "statuses") || []
+    errors = statuses.filter_map { |s| s["error"] }
+    return if errors.empty?
+
+    raise OrderError, errors.join("; ")
+  end
 
   # Returns a memoized Hyperliquid SDK instance.
   #

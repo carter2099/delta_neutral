@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_12_232741) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_20_035602) do
   create_table "dexes", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name", null: false
@@ -81,6 +81,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_12_232741) do
     t.index ["user_id"], name: "index_sessions_on_user_id"
   end
 
+  create_table "settings", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.boolean "hyperliquid_cross_margin", default: true, null: false
+    t.integer "hyperliquid_leverage", default: 3, null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id"], name: "index_settings_on_user_id", unique: true
+  end
+
   create_table "short_rebalances", force: :cascade do |t|
     t.string "asset"
     t.datetime "created_at", null: false
@@ -119,6 +128,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_12_232741) do
   add_foreign_key "positions", "users"
   add_foreign_key "positions", "wallets"
   add_foreign_key "sessions", "users"
+  add_foreign_key "settings", "users"
   add_foreign_key "short_rebalances", "hedges"
   add_foreign_key "wallets", "networks"
   add_foreign_key "wallets", "users"

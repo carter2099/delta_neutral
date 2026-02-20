@@ -23,8 +23,17 @@ class HedgeSyncJobTest < ActiveSupport::TestCase
 
     service = HyperliquidService.new(private_key: "0xtest", wallet_address: "0xwallet", testnet: true)
 
+    meta = {
+      "universe" => [
+        { "name" => "ETH", "szDecimals" => 4 },
+        { "name" => "BTC", "szDecimals" => 5 },
+        { "name" => "USDC", "szDecimals" => 2 }
+      ]
+    }
+
     mock_info = Object.new
     mock_info.define_singleton_method(:user_state) { |_| user_state }
+    mock_info.define_singleton_method(:meta) { meta }
     if fills_error
       mock_info.define_singleton_method(:user_fills_by_time) { |_addr, _start_time| raise fills_error }
     else
@@ -34,6 +43,7 @@ class HedgeSyncJobTest < ActiveSupport::TestCase
     mock_exchange = Object.new
     mock_exchange.define_singleton_method(:market_close) { |**_| { "status" => "ok" } }
     mock_exchange.define_singleton_method(:market_order) { |**_| { "status" => "ok" } }
+    mock_exchange.define_singleton_method(:update_leverage) { |**_| { "status" => "ok" } }
 
     mock_sdk = Object.new
     mock_sdk.define_singleton_method(:info) { mock_info }
@@ -55,11 +65,11 @@ class HedgeSyncJobTest < ActiveSupport::TestCase
     hedge = hedges(:eth_hedge)
 
     close_fills = [
-      { "coin" => "WETH", "closedPnl" => "-8.50", "px" => "2010", "sz" => "0.3", "side" => "B", "time" => Time.current.to_i * 1000 }
+      { "coin" => "ETH", "closedPnl" => "-8.50", "px" => "2010", "sz" => "0.3", "side" => "B", "time" => Time.current.to_i * 1000 }
     ]
 
     mock_service = build_mock_service(
-      positions: [ { coin: "WETH", szi: "-0.3" } ],
+      positions: [ { coin: "ETH", szi: "-0.3" } ],
       fills: close_fills
     )
 
@@ -77,7 +87,7 @@ class HedgeSyncJobTest < ActiveSupport::TestCase
     hedge = hedges(:eth_hedge)
 
     mock_service = build_mock_service(
-      positions: [ { coin: "WETH", szi: "-0.3" } ],
+      positions: [ { coin: "ETH", szi: "-0.3" } ],
       fills_error: Hyperliquid::NetworkError.new("connection refused")
     )
 
@@ -100,11 +110,11 @@ class HedgeSyncJobTest < ActiveSupport::TestCase
     hedge.position.update!(asset0_amount: BigDecimal("0"), asset1_amount: BigDecimal("0"))
 
     close_fills = [
-      { "coin" => "WETH", "closedPnl" => "-12.00", "px" => "1900", "sz" => "0.5", "side" => "B", "time" => Time.current.to_i * 1000 }
+      { "coin" => "ETH", "closedPnl" => "-12.00", "px" => "1900", "sz" => "0.5", "side" => "B", "time" => Time.current.to_i * 1000 }
     ]
 
     mock_service = build_mock_service(
-      positions: [ { coin: "WETH", szi: "-0.5" } ],
+      positions: [ { coin: "ETH", szi: "-0.5" } ],
       fills: close_fills
     )
 
