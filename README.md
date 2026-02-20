@@ -1,24 +1,109 @@
-# README
+# Delta Neutral
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+Self-hosted delta-neutral hedging automation for Uniswap V3 concentrated liquidity positions. Monitors your CLPs and automatically rebalances short hedges on Hyperliquid to maintain a target hedge percentage within a configurable tolerance band.
 
-Things you may want to cover:
+## How It Works
 
-* Ruby version
+1. Connect a wallet with Uniswap V3 positions
+2. Create a hedge with a target percentage (e.g. 50%) and tolerance (e.g. 10%)
+3. The app continuously monitors your pool amounts and opens/closes shorts on Hyperliquid to keep the hedge within tolerance
+4. If the position moves out of range and an asset drops to zero, the short for that asset is automatically closed while the other asset's hedge continues
 
-* System dependencies
+Each asset in a pair is hedged independently, allowing for asymmetric movements.
 
-* Configuration
+## Features
 
-* Database creation
+- **Automated Rebalancing** - Background jobs check positions every 5 minutes and rebalance shorts when deviation exceeds tolerance
+- **Per-Asset Independence** - The two assets in a position are hedged separately
+- **PnL Tracking** - Realized and unrealized P&L captured from Hyperliquid fill data
+- **Email Notifications** - Sent on every hedge rebalance with before/after short sizes
+- **Dashboard** - Real-time portfolio overview with active positions, hedges, and rebalance history
+- **Multi-Network** - Supports wallets on Ethereum, Arbitrum, Base, Optimism, and Polygon
 
-* Database initialization
+## Prerequisites
 
-* How to run the test suite
+- Ruby 3.4.8
+- SQLite3
+- A [Hyperliquid](https://hyperliquid.xyz) account with API credentials
+- A [The Graph](https://thegraph.com) API key
+- SMTP credentials for email notifications (optional)
 
-* Services (job queues, cache servers, search engines, etc.)
+## Setup
 
-* Deployment instructions
+```bash
+git clone https://github.com/carter2099/delta_neutral.git
+cd delta_neutral
 
-* ...
+bundle install
+bin/rails db:prepare
+bin/rails db:seed
+```
+
+Copy the example environment file and fill in your credentials:
+
+```bash
+cp .env.example .env
+```
+
+### Environment Variables
+
+```env
+# Hyperliquid
+HYPERLIQUID_PRIVATE_KEY=
+HYPERLIQUID_WALLET_ADDRESS=
+HYPERLIQUID_TESTNET=true          # Set to false for mainnet
+
+# Uniswap / The Graph
+UNISWAP_SUBGRAPH_URL=https://gateway.thegraph.com/api/subgraphs/id/5zvR82QoaXYFyDEKLZ9t6v9adgnptxYpKpSbxtgVENFV
+THEGRAPH_API_KEY=
+
+# SMTP (optional, for rebalance notifications)
+SMTP_ADDRESS=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USERNAME=
+SMTP_PASSWORD=
+SMTP_DOMAIN=
+```
+
+Start the development server:
+
+```bash
+bin/dev
+```
+
+This starts the Rails server, Solid Queue background jobs, and Tailwind CSS watcher. Access the app at `http://localhost:3000`.
+
+Default dev login: `admin@example.com` / `password123`
+
+## Docker
+
+```bash
+docker build -t delta_neutral:0.0.1 .
+
+docker run -d -p 80:80 \
+  -e RAILS_MASTER_KEY=<value from config/master.key> \
+  -e HYPERLIQUID_PRIVATE_KEY=<key> \
+  -e HYPERLIQUID_WALLET_ADDRESS=<address> \
+  -e HYPERLIQUID_TESTNET=false \
+  -e UNISWAP_SUBGRAPH_URL=<url> \
+  -e THEGRAPH_API_KEY=<key> \
+  --name delta_neutral \
+  delta_neutral
+```
+
+For production deployment with [Kamal](https://kamal-deploy.org), configure `config/deploy.yml` with your server IP and registry, then:
+
+```bash
+kamal deploy
+```
+
+## Production Notes
+
+- Start with `HYPERLIQUID_TESTNET=true` to validate your setup before trading with real funds
+- The SQLite database is stored in `storage/` - back this up regularly
+- Set up SSL/TLS for secure credential handling
+- Store API keys securely and never commit them to git
+
+## License
+
+MIT
