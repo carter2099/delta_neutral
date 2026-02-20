@@ -1,6 +1,13 @@
 <div class="flex items-center justify-between mb-8">
   <div>
-    <h1 class="text-3xl font-bold text-white"><%= @position.asset0 %>/<%= @position.asset1 %></h1>
+    <h1 class="text-3xl font-bold text-white inline-flex items-center gap-2">
+      <%= @position.asset0 %>/<%= @position.asset1 %>
+      <%= link_to position_path(@position), class: "text-gray-400 hover:text-white transition" do %>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.992 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182M21.015 4.356v4.992" />
+        </svg>
+      <% end %>
+    </h1>
     <p class="text-gray-400 mt-1"><%= @position.dex.name.capitalize %> &middot; <%= truncate(@position.pool_address.to_s, length: 20) %></p>
   </div>
   <div class="flex items-center space-x-3">
@@ -16,13 +23,13 @@
 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
   <div class="bg-gray-900 rounded-xl border border-gray-800 p-4">
     <p class="text-gray-400 text-xs uppercase tracking-wide"><%= @position.asset0 %></p>
-    <p class="text-xl font-bold text-white mt-1"><%= number_with_precision(@position.asset0_amount, precision: 6) %></p>
-    <p class="text-gray-500 text-sm">$<%= number_with_precision(@position.asset0_price_usd, precision: 2) %>/unit</p>
+    <p class="text-xl font-bold text-white mt-1">$<%= number_with_precision(@position.asset0_amount * @position.asset0_price_usd, precision: 2) %></p>
+    <p class="text-gray-500 text-sm"><%= number_with_precision(@position.asset0_amount, precision: 6) %> &middot; $<%= number_with_delimiter(number_with_precision(@position.asset0_price_usd, precision: 2)) %>/unit</p>
   </div>
   <div class="bg-gray-900 rounded-xl border border-gray-800 p-4">
     <p class="text-gray-400 text-xs uppercase tracking-wide"><%= @position.asset1 %></p>
-    <p class="text-xl font-bold text-white mt-1"><%= number_with_precision(@position.asset1_amount, precision: 2) %></p>
-    <p class="text-gray-500 text-sm">$<%= number_with_precision(@position.asset1_price_usd, precision: 2) %>/unit</p>
+    <p class="text-xl font-bold text-white mt-1">$<%= number_with_precision(@position.asset1_amount * @position.asset1_price_usd, precision: 2) %></p>
+    <p class="text-gray-500 text-sm"><%= number_with_precision(@position.asset1_amount, precision: 2) %> &middot; $<%= number_with_delimiter(number_with_precision(@position.asset1_price_usd, precision: 2)) %>/unit</p>
   </div>
   <div class="bg-gray-900 rounded-xl border border-gray-800 p-4">
     <p class="text-gray-400 text-xs uppercase tracking-wide">Total Value</p>

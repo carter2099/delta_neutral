@@ -12,7 +12,12 @@ class HedgesControllerTest < ActionDispatch::IntegrationTest
 
   test "should get show" do
     hedge = hedges(:eth_hedge)
-    get hedge_path(hedge)
+    mock_service = Object.new
+    mock_service.define_singleton_method(:get_position) { |_| nil }
+
+    HyperliquidService.stub(:new, mock_service) do
+      get hedge_path(hedge)
+    end
     assert_response :success
   end
 

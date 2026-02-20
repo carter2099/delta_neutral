@@ -66,10 +66,15 @@ class HyperliquidService
     state = sdk.info.user_state(@wallet_address)
     positions = (state["assetPositions"] || []).map do |ap|
       pos = ap["position"]
+      size = BigDecimal(pos["szi"])
+      position_value = BigDecimal(pos["positionValue"])
       {
         asset: pos["coin"],
-        size: BigDecimal(pos["szi"]),
+        size: size,
         entry_price: BigDecimal(pos["entryPx"]),
+        position_value: position_value,
+        margin_used: BigDecimal(pos["marginUsed"]),
+        mark_price: size.zero? ? BigDecimal("0") : (position_value / size.abs),
         unrealized_pnl: BigDecimal(pos["unrealizedPnl"]),
         return_on_equity: BigDecimal(pos["returnOnEquity"]),
         liquidation_price: pos["liquidationPx"] ? BigDecimal(pos["liquidationPx"]) : nil

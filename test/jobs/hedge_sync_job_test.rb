@@ -15,7 +15,8 @@ class HedgeSyncJobTest < ActiveSupport::TestCase
     user_state = {
       "assetPositions" => positions.map do |p|
         { "position" => { "coin" => p[:coin], "szi" => p[:szi],
-                          "entryPx" => "2000", "unrealizedPnl" => "-10",
+                          "entryPx" => "2000", "positionValue" => "1000",
+                          "marginUsed" => "100", "unrealizedPnl" => "-10",
                           "returnOnEquity" => "-0.01", "liquidationPx" => nil } }
       end,
       "marginSummary" => { "accountValue" => "10000" }

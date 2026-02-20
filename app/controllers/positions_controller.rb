@@ -20,7 +20,7 @@ class PositionsController < ApplicationController
   # @return [void]
   def show
     @position = Current.user.positions.find(params[:id])
-    @pnl_snapshots = @position.pnl_snapshots.order(captured_at: :desc).limit(50)
+    @pnl_snapshots = @position.pnl_snapshots.order(captured_at: :desc).limit(10)
     @rebalances = @position.hedge&.short_rebalances&.order(rebalanced_at: :desc) || ShortRebalance.none
   end
 

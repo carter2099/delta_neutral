@@ -19,7 +19,18 @@ class HedgesController < ApplicationController
   # @return [void]
   def show
     @hedge = find_hedge
-    @rebalances = @hedge.short_rebalances.order(rebalanced_at: :desc)
+    @rebalances = @hedge.short_rebalances.order(rebalanced_at: :desc).limit(10)
+
+    begin
+      hyperliquid = HyperliquidService.new
+      position = @hedge.position
+      symbols = [ position.asset0, position.asset1 ].map { |a| HedgeSyncJob::HYPERLIQUID_SYMBOL_MAP.fetch(a, a) }
+      @shorts = symbols.filter_map { |sym| hyperliquid.get_position(sym) }
+    rescue => e
+      Rails.logger.error("[HedgesController] Failed to fetch shorts for hedge #{@hedge.id}: #{e.message}")
+      @shorts = []
+      flash.now[:alert] = "Could not load Hyperliquid positions."
+    end
   end
 
   # GET /hedges/new

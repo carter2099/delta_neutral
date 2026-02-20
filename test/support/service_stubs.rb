@@ -60,6 +60,8 @@ module ServiceStubs
           "coin" => pos[:asset],
           "szi" => pos[:size].to_s,
           "entryPx" => pos[:entry_price].to_s,
+          "positionValue" => (pos[:position_value] || "1000").to_s,
+          "marginUsed" => (pos[:margin_used] || "100").to_s,
           "unrealizedPnl" => (pos[:unrealized_pnl] || "0").to_s,
           "returnOnEquity" => (pos[:return_on_equity] || "0").to_s,
           "liquidationPx" => pos[:liquidation_price]&.to_s

@@ -7,7 +7,14 @@
 
 <div class="flex items-center justify-between mb-8">
   <div>
-    <h1 class="text-3xl font-bold text-white">Hedge: <%= @hedge.position.asset0 %>/<%= @hedge.position.asset1 %></h1>
+    <h1 class="text-3xl font-bold text-white inline-flex items-center gap-2">
+      Hedge: <%= @hedge.position.asset0 %>/<%= @hedge.position.asset1 %>
+      <%= link_to hedge_path(@hedge), class: "text-gray-400 hover:text-white transition" do %>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.992 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182M21.015 4.356v4.992" />
+        </svg>
+      <% end %>
+    </h1>
     <p class="text-gray-400 mt-1">
       Target: <%= number_to_percentage(@hedge.target * 100, precision: 1) %> &middot;
       Tolerance: <%= number_to_percentage(@hedge.tolerance * 100, precision: 1) %>
@@ -39,6 +46,47 @@
     <p class="text-gray-400 text-xs uppercase tracking-wide">Total Rebalances</p>
     <p class="text-xl font-bold text-white mt-1"><%= @rebalances.size %></p>
   </div>
+</div>
+
+<h2 class="text-xl font-semibold text-white mb-4">Open Shorts</h2>
+<div class="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden mb-10">
+  <table class="w-full">
+    <thead>
+      <tr class="border-b border-gray-800">
+        <th class="text-left text-gray-400 text-xs uppercase tracking-wide p-4">Coin</th>
+        <th class="text-right text-gray-400 text-xs uppercase tracking-wide p-4">Value</th>
+        <th class="text-right text-gray-400 text-xs uppercase tracking-wide p-4">Size</th>
+        <th class="text-right text-gray-400 text-xs uppercase tracking-wide p-4">UPnL</th>
+        <th class="text-right text-gray-400 text-xs uppercase tracking-wide p-4">Entry</th>
+        <th class="text-right text-gray-400 text-xs uppercase tracking-wide p-4">Mark</th>
+        <th class="text-right text-gray-400 text-xs uppercase tracking-wide p-4">Liq Price</th>
+        <th class="text-right text-gray-400 text-xs uppercase tracking-wide p-4">Margin</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @shorts.each do |s| %>
+        <tr class="border-b border-gray-800/50">
+          <td class="p-4 text-white font-medium"><%= s[:asset] %></td>
+          <td class="p-4 text-right text-gray-300">$<%= number_with_delimiter(number_with_precision(s[:position_value], precision: 2)) %></td>
+          <td class="p-4 text-right text-gray-300"><%= number_with_precision(s[:size].abs, precision: 6) %></td>
+          <td class="p-4 text-right <%= s[:unrealized_pnl] >= 0 ? 'text-green-400' : 'text-red-400' %>">
+            $<%= number_with_precision(s[:unrealized_pnl], precision: 2) %>
+          </td>
+          <td class="p-4 text-right text-gray-300">$<%= number_with_delimiter(number_with_precision(s[:entry_price], precision: 2)) %></td>
+          <td class="p-4 text-right text-gray-300">$<%= number_with_delimiter(number_with_precision(s[:mark_price], precision: 2)) %></td>
+          <td class="p-4 text-right text-gray-300">
+            <%= s[:liquidation_price] ? "$#{number_with_delimiter(number_with_precision(s[:liquidation_price], precision: 2))}" : "—" %>
+          </td>
+          <td class="p-4 text-right text-gray-300">$<%= number_with_delimiter(number_with_precision(s[:margin_used], precision: 2)) %></td>
+        </tr>
+      <% end %>
+      <% if @shorts.empty? %>
+        <tr>
+          <td colspan="8" class="p-8 text-center text-gray-500">No open shorts.</td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
 </div>
 
 <h2 class="text-xl font-semibold text-white mb-4">Rebalance History</h2>
