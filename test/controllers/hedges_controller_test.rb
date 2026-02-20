@@ -35,12 +35,38 @@ class HedgesControllerTest < ActionDispatch::IntegrationTest
     assert_equal BigDecimal("0.6"), hedge.target
   end
 
-  test "should destroy hedge" do
+  test "should destroy hedge and close shorts" do
     hedge = hedges(:eth_hedge)
-    assert_difference "Hedge.count", -1 do
-      delete hedge_path(hedge)
+    closed_assets = []
+
+    mock_service = Minitest::Mock.new
+    mock_service.expect(:close_short, nil, asset: "ETH")
+    mock_service.expect(:close_short, nil, asset: "USDC")
+
+    HyperliquidService.stub(:new, mock_service) do
+      assert_difference "Hedge.count", -1 do
+        delete hedge_path(hedge)
+      end
     end
+
     assert_redirected_to hedges_path
+    mock_service.verify
+  end
+
+  test "should not destroy hedge if hyperliquid fails" do
+    hedge = hedges(:eth_hedge)
+
+    failing_service = Object.new
+    failing_service.define_singleton_method(:close_short) { |**_| raise "Connection refused" }
+
+    HyperliquidService.stub(:new, failing_service) do
+      assert_no_difference "Hedge.count" do
+        delete hedge_path(hedge)
+      end
+    end
+
+    assert_redirected_to hedge_path(hedge)
+    assert_match(/Failed to close Hyperliquid shorts/, flash[:alert])
   end
 
   test "should queue sync_now" do

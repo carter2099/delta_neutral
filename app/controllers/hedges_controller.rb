@@ -91,6 +91,20 @@ class HedgesController < ApplicationController
   # @return [void]
   def destroy
     @hedge = find_hedge
+
+    begin
+      hyperliquid = HyperliquidService.new
+      position = @hedge.position
+      [ position.asset0, position.asset1 ].each do |asset|
+        hl_asset = HedgeSyncJob::HYPERLIQUID_SYMBOL_MAP.fetch(asset, asset)
+        hyperliquid.close_short(asset: hl_asset)
+      end
+    rescue => e
+      Rails.logger.error("[HedgesController] Failed to close shorts for hedge #{@hedge.id}: #{e.message}")
+      redirect_to hedge_path(@hedge), alert: "Failed to close Hyperliquid shorts: #{e.message}"
+      return
+    end
+
     @hedge.destroy
     redirect_to hedges_path, notice: "Hedge removed."
   end

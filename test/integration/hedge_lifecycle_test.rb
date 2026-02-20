@@ -32,10 +32,17 @@ class HedgeLifecycleTest < ActionDispatch::IntegrationTest
     hedge.reload
     assert_equal BigDecimal("0.7"), hedge.target
 
-    # Delete hedge
-    assert_difference "Hedge.count", -1 do
-      delete hedge_path(hedge)
+    # Delete hedge (stub Hyperliquid so no real HTTP calls are made)
+    mock_service = Minitest::Mock.new
+    mock_service.expect(:close_short, nil, asset: "ETH")
+    mock_service.expect(:close_short, nil, asset: "USDC")
+
+    HyperliquidService.stub(:new, mock_service) do
+      assert_difference "Hedge.count", -1 do
+        delete hedge_path(hedge)
+      end
     end
     assert_redirected_to hedges_path
+    mock_service.verify
   end
 end
