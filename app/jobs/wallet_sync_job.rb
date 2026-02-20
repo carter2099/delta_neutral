@@ -19,15 +19,20 @@ class WalletSyncJob < ApplicationJob
   #   sync all wallets
   # @return [void]
   def perform(wallet_id = nil)
+    Rails.logger.debug { "[WalletSyncJob] starting — wallet_id=#{wallet_id || 'all'}" }
     wallets = wallet_id ? Wallet.where(id: wallet_id) : Wallet.all
     uniswap = UniswapService.new
     uniswap_dex = Dex.find_by!(name: "uniswap")
+
+    Rails.logger.debug { "[WalletSyncJob] found #{wallets.count} wallet(s) to sync" }
 
     wallets.find_each do |wallet|
       sync_wallet(wallet, uniswap, uniswap_dex)
     rescue => e
       Rails.logger.error("WalletSyncJob failed for wallet #{wallet.id}: #{e.message}")
     end
+
+    Rails.logger.debug { "[WalletSyncJob] complete" }
   end
 
   private
@@ -42,7 +47,9 @@ class WalletSyncJob < ApplicationJob
   # @param uniswap_dex [Dex] the Uniswap {Dex} record
   # @return [void]
   def sync_wallet(wallet, uniswap, uniswap_dex)
+    Rails.logger.debug { "[WalletSyncJob] syncing wallet #{wallet.id} (#{wallet.address})" }
     subgraph_positions = uniswap.fetch_positions(wallet.address)
+    Rails.logger.debug { "[WalletSyncJob] wallet #{wallet.id}: subgraph returned #{subgraph_positions.size} position(s)" }
     external_ids = subgraph_positions.map { |p| p[:external_id] }
 
     # Mark positions not in subgraph as inactive
@@ -50,6 +57,8 @@ class WalletSyncJob < ApplicationJob
 
     subgraph_positions.each do |pos_data|
       position = wallet.positions.find_or_initialize_by(external_id: pos_data[:external_id])
+      action = position.new_record? ? "creating" : "updating"
+      Rails.logger.debug { "[WalletSyncJob] #{action} position #{pos_data[:external_id]} (#{pos_data[:asset0]}/#{pos_data[:asset1]})" }
       position.assign_attributes(
         user: wallet.user,
         dex: uniswap_dex,
@@ -62,5 +71,7 @@ class WalletSyncJob < ApplicationJob
       )
       position.save!
     end
+
+    Rails.logger.debug { "[WalletSyncJob] wallet #{wallet.id} sync complete" }
   end
 end

@@ -27,14 +27,19 @@ class HedgeSyncJob < ApplicationJob
   #   sync all active hedges
   # @return [void]
   def perform(hedge_id = nil)
+    Rails.logger.debug { "[HedgeSyncJob] starting — hedge_id=#{hedge_id || 'all active'}" }
     hedges = hedge_id ? Hedge.where(id: hedge_id) : Hedge.active
     hyperliquid = HyperliquidService.new
+
+    Rails.logger.debug { "[HedgeSyncJob] found #{hedges.count} hedge(s) to sync" }
 
     hedges.includes(:position).find_each do |hedge|
       sync_hedge(hedge, hyperliquid)
     rescue => e
       Rails.logger.error("HedgeSyncJob failed for hedge #{hedge.id}: #{e.message}")
     end
+
+    Rails.logger.debug { "[HedgeSyncJob] complete" }
   end
 
   private
@@ -45,12 +50,14 @@ class HedgeSyncJob < ApplicationJob
   # @param hyperliquid [HyperliquidService] configured Hyperliquid client
   # @return [void]
   def sync_hedge(hedge, hyperliquid)
+    Rails.logger.debug { "[HedgeSyncJob] syncing hedge #{hedge.id} (target=#{hedge.target}, tolerance=#{hedge.tolerance})" }
     position = hedge.position
     unless position.active?
       Rails.logger.warn("HedgeSyncJob: skipping hedge #{hedge.id} — position #{position.id} is inactive")
       return
     end
 
+    Rails.logger.debug { "[HedgeSyncJob] hedge #{hedge.id} position #{position.id} is active, checking assets" }
     check_and_rebalance(hedge, position.asset0, position.asset0_amount, hyperliquid)
     check_and_rebalance(hedge, position.asset1, position.asset1_amount, hyperliquid)
   end
@@ -71,26 +78,37 @@ class HedgeSyncJob < ApplicationJob
   # @param hyperliquid [HyperliquidService] configured Hyperliquid client
   # @return [void]
   def check_and_rebalance(hedge, asset, pool_amount, hyperliquid)
+    Rails.logger.debug { "[HedgeSyncJob] hedge #{hedge.id} #{asset}: pool_amount=#{pool_amount}" }
     current_position = hyperliquid.get_position(asset)
     current_short = current_position ? current_position[:size].abs : BigDecimal("0")
+    target_short = pool_amount * hedge.target
+
+    Rails.logger.debug { "[HedgeSyncJob] hedge #{hedge.id} #{asset}: current_short=#{current_short}, target_short=#{target_short}" }
 
     unless hedge.needs_rebalance?(pool_amount, current_short)
-      Rails.logger.debug("HedgeSyncJob: hedge #{hedge.id} #{asset} within tolerance, no rebalance needed")
+      Rails.logger.debug { "[HedgeSyncJob] hedge #{hedge.id} #{asset}: within tolerance, no rebalance needed" }
       return
     end
 
-    target_short = pool_amount * hedge.target
+    Rails.logger.debug { "[HedgeSyncJob] hedge #{hedge.id} #{asset}: REBALANCE NEEDED" }
     realized_pnl = BigDecimal("0")
 
     # Close existing short and get realized PnL from fills
     if current_short > 0
+      Rails.logger.debug { "[HedgeSyncJob] hedge #{hedge.id} #{asset}: closing existing short (size=#{current_short})" }
       before_close = Time.current
       hyperliquid.close_short(asset: asset)
       realized_pnl = fetch_realized_pnl(hyperliquid, asset, before_close)
+      Rails.logger.debug { "[HedgeSyncJob] hedge #{hedge.id} #{asset}: realized_pnl=#{realized_pnl}" }
     end
 
     # Open new short at target size (not needed when target or pool amt is 0)
-    hyperliquid.open_short(asset: asset, size: target_short) if target_short > 0
+    if target_short > 0
+      Rails.logger.debug { "[HedgeSyncJob] hedge #{hedge.id} #{asset}: opening new short (size=#{target_short})" }
+      hyperliquid.open_short(asset: asset, size: target_short)
+    else
+      Rails.logger.debug { "[HedgeSyncJob] hedge #{hedge.id} #{asset}: target is zero, skipping open" }
+    end
 
     rebalance = hedge.short_rebalances.create!(
       asset: asset,
@@ -99,6 +117,7 @@ class HedgeSyncJob < ApplicationJob
       realized_pnl: realized_pnl,
       rebalanced_at: Time.current
     )
+    Rails.logger.debug { "[HedgeSyncJob] hedge #{hedge.id} #{asset}: ShortRebalance ##{rebalance.id} created (#{current_short} → #{target_short}, realized_pnl=#{realized_pnl})" }
 
     HedgeRebalanceMailer.rebalance_notification(rebalance).deliver_later
   end

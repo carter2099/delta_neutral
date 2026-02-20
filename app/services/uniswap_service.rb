@@ -91,8 +91,10 @@ class UniswapService
   # @return [Array<Hash>] each hash includes +:external_id+, +:pool_address+,
   #   +:asset0+, +:asset1+, +:asset0_amount+, +:asset1_amount+
   def fetch_positions(wallet_address)
+    Rails.logger.debug { "[UniswapService] fetch_positions for wallet #{wallet_address}" }
     result = execute_query(POSITIONS_QUERY, { owner: wallet_address.downcase })
     positions = result.dig("data", "positions") || []
+    Rails.logger.debug { "[UniswapService] fetch_positions returned #{positions.size} position(s)" }
 
     positions.map do |pos|
       deposited0 = BigDecimal(pos["depositedToken0"])
@@ -122,6 +124,7 @@ class UniswapService
   # @param token_ids [Array<String>] ERC-20 contract addresses
   # @return [Hash{String => BigDecimal}] map of token address/symbol to USD price
   def fetch_token_prices_usd(token_ids)
+    Rails.logger.debug { "[UniswapService] fetch_token_prices_usd for #{token_ids.size} token(s)" }
     result = execute_query(TOKEN_PRICES_QUERY, { tokenIds: token_ids.map(&:downcase) })
     eth_price_usd = BigDecimal(result.dig("data", "bundle", "ethPriceUSD"))
     tokens = result.dig("data", "tokens") || []
@@ -142,9 +145,13 @@ class UniswapService
   #   +:liquidity+, +:token0_symbol+, +:token1_symbol+,
   #   +:token0_price_usd+, +:token1_price_usd+; +nil+ if pool not found
   def fetch_pool_data(pool_address)
+    Rails.logger.debug { "[UniswapService] fetch_pool_data for pool #{pool_address}" }
     result = execute_query(POOL_QUERY, { poolId: pool_address.downcase })
     pool = result.dig("data", "pool")
-    return nil unless pool
+    unless pool
+      Rails.logger.debug { "[UniswapService] fetch_pool_data: pool #{pool_address} not found in subgraph" }
+      return nil
+    end
 
     eth_price_usd = BigDecimal(result.dig("data", "bundle", "ethPriceUSD"))
 
@@ -170,6 +177,8 @@ class UniswapService
   #   GraphQL response contains errors
   def execute_query(query, variables = {})
     uri = URI(@subgraph_url)
+    query_name = query[/query\s*\(/, 0] ? query[/query.*?\{/m]&.strip&.truncate(60) : "unknown"
+    Rails.logger.debug { "[UniswapService] GraphQL request to #{uri.host}: #{query_name}, variables=#{variables.inspect}" }
     headers = { "Content-Type" => "application/json" }
     headers["Authorization"] = "Bearer #{@api_key}" if @api_key.present?
 
@@ -178,15 +187,18 @@ class UniswapService
     response = Net::HTTP.post(uri, body, headers)
 
     unless response.is_a?(Net::HTTPSuccess)
+      Rails.logger.debug { "[UniswapService] HTTP error: #{response.code}" }
       raise "Uniswap subgraph request failed: #{response.code} #{response.body}"
     end
 
     parsed = JSON.parse(response.body)
 
     if parsed["errors"]&.any?
+      Rails.logger.debug { "[UniswapService] GraphQL errors: #{parsed["errors"].map { |e| e["message"] }.join(", ")}" }
       raise "Uniswap subgraph query error: #{parsed["errors"].map { |e| e["message"] }.join(", ")}"
     end
 
+    Rails.logger.debug { "[UniswapService] GraphQL response OK, data keys: #{parsed["data"]&.keys&.join(", ")}" }
     parsed
   end
 end

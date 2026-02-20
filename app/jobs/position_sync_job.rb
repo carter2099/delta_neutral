@@ -17,15 +17,20 @@ class PositionSyncJob < ApplicationJob
   #   to sync all active positions
   # @return [void]
   def perform(position_id = nil)
+    Rails.logger.debug { "[PositionSyncJob] starting — position_id=#{position_id || 'all active'}" }
     positions = position_id ? Position.where(id: position_id) : Position.active
     uniswap = UniswapService.new
     hyperliquid = HyperliquidService.new
+
+    Rails.logger.debug { "[PositionSyncJob] found #{positions.count} position(s) to sync" }
 
     positions.includes(:hedge).find_each do |position|
       sync_position(position, uniswap, hyperliquid)
     rescue => e
       Rails.logger.error("PositionSyncJob failed for position #{position.id}: #{e.message}")
     end
+
+    Rails.logger.debug { "[PositionSyncJob] complete" }
   end
 
   private
@@ -40,28 +45,42 @@ class PositionSyncJob < ApplicationJob
   # @param hyperliquid [HyperliquidService] configured Hyperliquid client
   # @return [void]
   def sync_position(position, uniswap, hyperliquid)
+    Rails.logger.debug { "[PositionSyncJob] syncing position #{position.id} (#{position.asset0}/#{position.asset1}, pool=#{position.pool_address})" }
     pool_data = uniswap.fetch_pool_data(position.pool_address)
     unless pool_data
       Rails.logger.warn("PositionSyncJob: skipping position #{position.id} — no pool data returned from subgraph")
       return
     end
 
+    Rails.logger.debug { "[PositionSyncJob] position #{position.id} prices: #{position.asset0} $#{pool_data[:token0_price_usd]&.round(4)}, #{position.asset1} $#{pool_data[:token1_price_usd]&.round(4)}" }
+
+    old_prices = [ position.asset0_price_usd, position.asset1_price_usd ]
     position.update!(
       asset0_price_usd: pool_data[:token0_price_usd],
       asset1_price_usd: pool_data[:token1_price_usd]
     )
+    Rails.logger.debug { "[PositionSyncJob] position #{position.id} price update: asset0 #{old_prices[0]} → #{position.asset0_price_usd}, asset1 #{old_prices[1]} → #{position.asset1_price_usd}" }
 
     hedge_unrealized = BigDecimal("0")
     hedge_realized = BigDecimal("0")
 
     if position.hedge&.active?
+      Rails.logger.debug { "[PositionSyncJob] position #{position.id} has active hedge #{position.hedge.id}, fetching Hyperliquid positions" }
       all_positions = hyperliquid.get_positions
       [ position.asset0, position.asset1 ].each do |asset|
         pos = all_positions.find { |p| p[:asset] == asset }
-        hedge_unrealized += pos[:unrealized_pnl] if pos
+        if pos
+          Rails.logger.debug { "[PositionSyncJob] hedge PnL for #{asset}: unrealized=#{pos[:unrealized_pnl]}" }
+          hedge_unrealized += pos[:unrealized_pnl]
+        else
+          Rails.logger.debug { "[PositionSyncJob] no Hyperliquid position found for #{asset}" }
+        end
       end
 
       hedge_realized = position.hedge.short_rebalances.sum(:realized_pnl)
+      Rails.logger.debug { "[PositionSyncJob] position #{position.id} hedge totals: unrealized=#{hedge_unrealized}, realized=#{hedge_realized}" }
+    else
+      Rails.logger.debug { "[PositionSyncJob] position #{position.id} has no active hedge" }
     end
 
     PnlSnapshot.create!(
@@ -74,5 +93,6 @@ class PositionSyncJob < ApplicationJob
       hedge_unrealized: hedge_unrealized,
       hedge_realized: hedge_realized
     )
+    Rails.logger.debug { "[PositionSyncJob] position #{position.id} PnlSnapshot created" }
   end
 end

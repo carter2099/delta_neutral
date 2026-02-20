@@ -27,7 +27,10 @@ class HyperliquidService
   # @param size [BigDecimal] position size in base units
   # @return [Hash] the SDK response from the exchange
   def open_short(asset:, size:)
-    sdk.exchange.market_order(coin: asset, is_buy: false, size: size)
+    Rails.logger.debug { "[HyperliquidService] open_short: asset=#{asset}, size=#{size}" }
+    result = sdk.exchange.market_order(coin: asset, is_buy: false, size: size)
+    Rails.logger.debug { "[HyperliquidService] open_short result: #{result.inspect.truncate(200)}" }
+    result
   end
 
   # Closes an open short position for the given asset.
@@ -38,7 +41,10 @@ class HyperliquidService
   # @param size [BigDecimal, nil] amount to close; +nil+ closes the full position
   # @return [Hash, nil] the SDK response, or +nil+ if no position was open
   def close_short(asset:, size: nil)
-    sdk.exchange.market_close(coin: asset, size: size)
+    Rails.logger.debug { "[HyperliquidService] close_short: asset=#{asset}, size=#{size || 'full'}" }
+    result = sdk.exchange.market_close(coin: asset, size: size)
+    Rails.logger.debug { "[HyperliquidService] close_short result: #{result.inspect.truncate(200)}" }
+    result
   rescue ArgumentError => e
     # market_close raises ArgumentError if no open position exists
     raise unless e.message.include?("No open position found")
@@ -52,8 +58,9 @@ class HyperliquidService
   #   +:entry_price+, +:unrealized_pnl+, +:return_on_equity+, and
   #   +:liquidation_price+
   def get_positions
+    Rails.logger.debug { "[HyperliquidService] get_positions for #{@wallet_address}" }
     state = sdk.info.user_state(@wallet_address)
-    (state["assetPositions"] || []).map do |ap|
+    positions = (state["assetPositions"] || []).map do |ap|
       pos = ap["position"]
       {
         asset: pos["coin"],
@@ -64,6 +71,8 @@ class HyperliquidService
         liquidation_price: pos["liquidationPx"] ? BigDecimal(pos["liquidationPx"]) : nil
       }
     end
+    Rails.logger.debug { "[HyperliquidService] get_positions returned #{positions.size} position(s): #{positions.map { |p| "#{p[:asset]} size=#{p[:size]}" }.join(", ")}" }
+    positions
   end
 
   # Returns the open position for a specific asset, or +nil+ if none exists.
@@ -71,7 +80,9 @@ class HyperliquidService
   # @param asset [String] the coin symbol
   # @return [Hash, nil] position hash (see {#get_positions}) or +nil+
   def get_position(asset)
-    get_positions.find { |p| p[:asset] == asset }
+    pos = get_positions.find { |p| p[:asset] == asset }
+    Rails.logger.debug { "[HyperliquidService] get_position(#{asset}): #{pos ? "size=#{pos[:size]}, unrealized_pnl=#{pos[:unrealized_pnl]}" : "not found"}" }
+    pos
   end
 
   # Returns the unrealized P&L for a specific asset position.
@@ -88,7 +99,10 @@ class HyperliquidService
   # @param start_time [Time] only return fills at or after this time
   # @return [Array<Hash>] raw fill objects from the Hyperliquid API
   def user_fills(start_time:)
-    sdk.info.user_fills_by_time(@wallet_address, start_time.to_i * 1000)
+    Rails.logger.debug { "[HyperliquidService] user_fills since #{start_time}" }
+    fills = sdk.info.user_fills_by_time(@wallet_address, start_time.to_i * 1000)
+    Rails.logger.debug { "[HyperliquidService] user_fills returned #{fills.size} fill(s)" }
+    fills
   end
 
   private
