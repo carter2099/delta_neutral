@@ -1,0 +1,7 @@
+one:
+  hedge: eth_hedge
+  asset: WETH
+  old_short_size: "0.70000000"
+  new_short_size: "0.75000000"
+  realized_pnl: "25.00000000"
+  rebalanced_at: <%= Time.current %>

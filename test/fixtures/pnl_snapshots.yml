@@ -1,0 +1,9 @@
+one:
+  position: eth_usdc
+  captured_at: <%= Time.current %>
+  asset0_amount: "1.500000000000000000"
+  asset1_amount: "3000.000000000000000000"
+  asset0_price_usd: "2000.00000000"
+  asset1_price_usd: "1.00000000"
+  hedge_unrealized: "-50.00000000"
+  hedge_realized: "100.00000000"

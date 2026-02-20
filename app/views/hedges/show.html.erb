@@ -1,0 +1,68 @@
+<div class="flex items-center justify-between mb-8">
+  <div>
+    <h1 class="text-3xl font-bold text-white">Hedge: <%= @hedge.position.asset0 %>/<%= @hedge.position.asset1 %></h1>
+    <p class="text-gray-400 mt-1">
+      Target: <%= number_to_percentage(@hedge.target * 100, precision: 1) %> &middot;
+      Tolerance: <%= number_to_percentage(@hedge.tolerance * 100, precision: 1) %>
+    </p>
+  </div>
+  <div class="flex items-center space-x-3">
+    <%= button_to "Sync Now", sync_now_hedge_path(@hedge), method: :post, class: "bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition" %>
+    <%= link_to "Edit", edit_hedge_path(@hedge), class: "bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition" %>
+    <%= button_to "Delete", hedge_path(@hedge), method: :delete, class: "bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition", data: { turbo_confirm: "Delete this hedge?" } %>
+  </div>
+</div>
+
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+  <div class="bg-gray-900 rounded-xl border border-gray-800 p-4">
+    <p class="text-gray-400 text-xs uppercase tracking-wide">Status</p>
+    <p class="text-xl font-bold mt-1 <%= @hedge.active? ? 'text-green-400' : 'text-gray-500' %>">
+      <%= @hedge.active? ? "Active" : "Paused" %>
+    </p>
+  </div>
+  <div class="bg-gray-900 rounded-xl border border-gray-800 p-4">
+    <p class="text-gray-400 text-xs uppercase tracking-wide">Target</p>
+    <p class="text-xl font-bold text-white mt-1"><%= number_to_percentage(@hedge.target * 100, precision: 1) %></p>
+  </div>
+  <div class="bg-gray-900 rounded-xl border border-gray-800 p-4">
+    <p class="text-gray-400 text-xs uppercase tracking-wide">Tolerance</p>
+    <p class="text-xl font-bold text-white mt-1"><%= number_to_percentage(@hedge.tolerance * 100, precision: 1) %></p>
+  </div>
+  <div class="bg-gray-900 rounded-xl border border-gray-800 p-4">
+    <p class="text-gray-400 text-xs uppercase tracking-wide">Total Rebalances</p>
+    <p class="text-xl font-bold text-white mt-1"><%= @rebalances.size %></p>
+  </div>
+</div>
+
+<h2 class="text-xl font-semibold text-white mb-4">Rebalance History</h2>
+<div class="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
+  <table class="w-full">
+    <thead>
+      <tr class="border-b border-gray-800">
+        <th class="text-left text-gray-400 text-xs uppercase tracking-wide p-4">Asset</th>
+        <th class="text-right text-gray-400 text-xs uppercase tracking-wide p-4">Old Short</th>
+        <th class="text-right text-gray-400 text-xs uppercase tracking-wide p-4">New Short</th>
+        <th class="text-right text-gray-400 text-xs uppercase tracking-wide p-4">Realized PnL</th>
+        <th class="text-right text-gray-400 text-xs uppercase tracking-wide p-4">Time</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @rebalances.each do |r| %>
+        <tr class="border-b border-gray-800/50">
+          <td class="p-4 text-white font-medium"><%= r.asset %></td>
+          <td class="p-4 text-right text-gray-300"><%= number_with_precision(r.old_short_size, precision: 6) %></td>
+          <td class="p-4 text-right text-white"><%= number_with_precision(r.new_short_size, precision: 6) %></td>
+          <td class="p-4 text-right <%= r.realized_pnl >= 0 ? 'text-green-400' : 'text-red-400' %>">
+            $<%= number_with_precision(r.realized_pnl, precision: 2) %>
+          </td>
+          <td class="p-4 text-right text-gray-400 text-sm"><%= r.rebalanced_at.strftime("%Y-%m-%d %H:%M:%S") %></td>
+        </tr>
+      <% end %>
+      <% if @rebalances.empty? %>
+        <tr>
+          <td colspan="5" class="p-8 text-center text-gray-500">No rebalances yet.</td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

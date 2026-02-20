@@ -1,0 +1,101 @@
+<div class="flex items-center justify-between mb-8">
+  <div>
+    <h1 class="text-3xl font-bold text-white"><%= @position.asset0 %>/<%= @position.asset1 %></h1>
+    <p class="text-gray-400 mt-1"><%= @position.dex.name.capitalize %> &middot; <%= truncate(@position.pool_address.to_s, length: 20) %></p>
+  </div>
+  <div class="flex items-center space-x-3">
+    <%= button_to "Sync Now", sync_now_position_path(@position), method: :post, class: "bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition" %>
+    <% unless @position.hedge %>
+      <%= link_to "Create Hedge", new_hedge_path(position_id: @position.id), class: "bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition" %>
+    <% end %>
+  </div>
+</div>
+
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+  <div class="bg-gray-900 rounded-xl border border-gray-800 p-4">
+    <p class="text-gray-400 text-xs uppercase tracking-wide"><%= @position.asset0 %></p>
+    <p class="text-xl font-bold text-white mt-1"><%= number_with_precision(@position.asset0_amount, precision: 6) %></p>
+    <p class="text-gray-500 text-sm">$<%= number_with_precision(@position.asset0_price_usd, precision: 2) %>/unit</p>
+  </div>
+  <div class="bg-gray-900 rounded-xl border border-gray-800 p-4">
+    <p class="text-gray-400 text-xs uppercase tracking-wide"><%= @position.asset1 %></p>
+    <p class="text-xl font-bold text-white mt-1"><%= number_with_precision(@position.asset1_amount, precision: 2) %></p>
+    <p class="text-gray-500 text-sm">$<%= number_with_precision(@position.asset1_price_usd, precision: 2) %>/unit</p>
+  </div>
+  <div class="bg-gray-900 rounded-xl border border-gray-800 p-4">
+    <p class="text-gray-400 text-xs uppercase tracking-wide">Total Value</p>
+    <p class="text-xl font-bold text-white mt-1">$<%= number_with_precision(@position.total_value_usd, precision: 2) %></p>
+  </div>
+  <div class="bg-gray-900 rounded-xl border border-gray-800 p-4">
+    <p class="text-gray-400 text-xs uppercase tracking-wide">Hedge Status</p>
+    <% if @position.hedge&.active? %>
+      <p class="text-xl font-bold text-green-400 mt-1">Active (<%= number_to_percentage(@position.hedge.target * 100, precision: 0) %>)</p>
+    <% else %>
+      <p class="text-xl font-bold text-gray-500 mt-1">None</p>
+    <% end %>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+  <div>
+    <h2 class="text-xl font-semibold text-white mb-4">PnL History</h2>
+    <div class="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
+      <table class="w-full">
+        <thead>
+          <tr class="border-b border-gray-800">
+            <th class="text-left text-gray-400 text-xs uppercase tracking-wide p-4">Time</th>
+            <th class="text-right text-gray-400 text-xs uppercase tracking-wide p-4">Value</th>
+            <th class="text-right text-gray-400 text-xs uppercase tracking-wide p-4">Hedge PnL</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @pnl_snapshots.each do |snap| %>
+            <tr class="border-b border-gray-800/50">
+              <td class="p-4 text-gray-400 text-sm"><%= snap.captured_at.strftime("%m/%d %H:%M") %></td>
+              <td class="p-4 text-right text-white">$<%= number_with_precision(snap.total_value_usd, precision: 2) %></td>
+              <td class="p-4 text-right <%= snap.hedge_unrealized.to_d >= 0 ? 'text-green-400' : 'text-red-400' %>">
+                $<%= number_with_precision(snap.hedge_unrealized, precision: 2) %>
+              </td>
+            </tr>
+          <% end %>
+          <% if @pnl_snapshots.empty? %>
+            <tr><td colspan="3" class="p-8 text-center text-gray-500">No snapshots yet.</td></tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div>
+    <h2 class="text-xl font-semibold text-white mb-4">Rebalance History</h2>
+    <div class="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
+      <table class="w-full">
+        <thead>
+          <tr class="border-b border-gray-800">
+            <th class="text-left text-gray-400 text-xs uppercase tracking-wide p-4">Asset</th>
+            <th class="text-right text-gray-400 text-xs uppercase tracking-wide p-4">Old &rarr; New</th>
+            <th class="text-right text-gray-400 text-xs uppercase tracking-wide p-4">PnL</th>
+            <th class="text-right text-gray-400 text-xs uppercase tracking-wide p-4">Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @rebalances.each do |r| %>
+            <tr class="border-b border-gray-800/50">
+              <td class="p-4 text-white font-medium"><%= r.asset %></td>
+              <td class="p-4 text-right text-gray-300">
+                <%= number_with_precision(r.old_short_size, precision: 4) %> &rarr; <%= number_with_precision(r.new_short_size, precision: 4) %>
+              </td>
+              <td class="p-4 text-right <%= r.realized_pnl.to_d >= 0 ? 'text-green-400' : 'text-red-400' %>">
+                $<%= number_with_precision(r.realized_pnl, precision: 2) %>
+              </td>
+              <td class="p-4 text-right text-gray-400 text-sm"><%= time_ago_in_words(r.rebalanced_at) %> ago</td>
+            </tr>
+          <% end %>
+          <% if @rebalances.empty? %>
+            <tr><td colspan="4" class="p-8 text-center text-gray-500">No rebalances yet.</td></tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

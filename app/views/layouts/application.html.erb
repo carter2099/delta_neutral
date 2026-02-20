@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html class="dark">
   <head>
     <title><%= content_for(:title) || "Delta Neutral" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -11,19 +11,49 @@
 
     <%= yield :head %>
 
-    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
-    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
-
     <link rel="icon" href="/icon.png" type="image/png">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
 
-    <%# Includes all stylesheet files in app/assets/stylesheets %>
+    <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
   </head>
 
-  <body>
-    <%= yield %>
+  <body class="bg-gray-950 text-gray-100 min-h-screen">
+    <% if authenticated? %>
+      <nav class="bg-gray-900 border-b border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div class="flex items-center justify-between h-16">
+            <div class="flex items-center space-x-8">
+              <span class="text-xl font-bold text-white tracking-tight">Delta Neutral</span>
+              <%= link_to "Dashboard", root_path, class: "text-gray-300 hover:text-white transition text-sm font-medium" %>
+              <%= link_to "Wallets", wallets_path, class: "text-gray-300 hover:text-white transition text-sm font-medium" %>
+              <%= link_to "Positions", positions_path, class: "text-gray-300 hover:text-white transition text-sm font-medium" %>
+              <%= link_to "Hedges", hedges_path, class: "text-gray-300 hover:text-white transition text-sm font-medium" %>
+            </div>
+            <div class="flex items-center space-x-4">
+              <span class="text-gray-400 text-sm"><%= Current.user.first_name %> <%= Current.user.last_name %></span>
+              <%= button_to "Logout", session_path, method: :delete, class: "text-gray-400 hover:text-white text-sm font-medium transition" %>
+            </div>
+          </div>
+        </div>
+      </nav>
+    <% end %>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <% if flash[:notice] %>
+        <div class="mb-6 rounded-lg bg-green-900/50 border border-green-700 p-4 text-green-300 text-sm">
+          <%= flash[:notice] %>
+        </div>
+      <% end %>
+      <% if flash[:alert] %>
+        <div class="mb-6 rounded-lg bg-red-900/50 border border-red-700 p-4 text-red-300 text-sm">
+          <%= flash[:alert] %>
+        </div>
+      <% end %>
+
+      <%= yield %>
+    </div>
   </body>
 </html>

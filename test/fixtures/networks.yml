@@ -1,0 +1,7 @@
+ethereum:
+  name: ethereum
+  chain_id: 1
+
+arbitrum:
+  name: arbitrum
+  chain_id: 42161

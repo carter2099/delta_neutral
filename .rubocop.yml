@@ -1,8 +1,42 @@
 # Omakase Ruby styling for Rails
 inherit_gem: { rubocop-rails-omakase: rubocop.yml }
 
-# Overwrite or add rules to create your own house style
-#
-# # Use `[a, [b, c]]` not `[ a, [ b, c ] ]`
-# Layout/SpaceInsideArrayLiteralBrackets:
-#   Enabled: false
+# Dead code / unreachable
+Lint/UnreachableCode:
+  Enabled: true
+
+# Assigning a variable that's never read
+Lint/UselessAssignment:
+  Enabled: true
+
+# Duplicate method definition in same class - last one silently wins
+Lint/DuplicateMethods:
+  Enabled: true
+
+# Duplicate key in hash literal - second silently overwrites first
+Lint/DuplicateHashKey:
+  Enabled: true
+
+# return inside ensure discards the exception - always wrong
+Lint/EnsureReturn:
+  Enabled: true
+
+# Leftover debug calls
+Lint/Debugger:
+  Enabled: true
+
+# Duplicate association declarations in models
+Rails/DuplicateAssociation:
+  Enabled: true
+
+# .select { }.count instead of .count { }
+Performance/Count:
+  Enabled: true
+  Exclude:
+    - "test/**/*"
+
+# .select { }.first instead of .detect { }
+Performance/Detect:
+  Enabled: true
+  Exclude:
+    - "test/**/*"

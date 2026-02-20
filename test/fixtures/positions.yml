@@ -1,0 +1,13 @@
+eth_usdc:
+  user: one
+  dex: uniswap
+  wallet: one
+  asset0: WETH
+  asset1: USDC
+  asset0_amount: "1.500000000000000000"
+  asset1_amount: "3000.000000000000000000"
+  asset0_price_usd: "2000.00000000"
+  asset1_price_usd: "1.00000000"
+  external_id: "12345"
+  pool_address: "0xpool1234"
+  active: true

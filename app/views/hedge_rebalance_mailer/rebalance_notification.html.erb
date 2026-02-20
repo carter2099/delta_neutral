@@ -1,0 +1,36 @@
+<h2>Hedge Rebalanced</h2>
+
+<table style="border-collapse: collapse; width: 100%; max-width: 600px;">
+  <tr>
+    <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Asset</td>
+    <td style="padding: 8px; border: 1px solid #ddd;"><%= @rebalance.asset %></td>
+  </tr>
+  <tr>
+    <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Old Short Size</td>
+    <td style="padding: 8px; border: 1px solid #ddd;"><%= number_with_precision(@rebalance.old_short_size, precision: 8) %></td>
+  </tr>
+  <tr>
+    <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">New Short Size</td>
+    <td style="padding: 8px; border: 1px solid #ddd;"><%= number_with_precision(@rebalance.new_short_size, precision: 8) %></td>
+  </tr>
+  <tr>
+    <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Realized PnL</td>
+    <td style="padding: 8px; border: 1px solid #ddd;">$<%= number_with_precision(@rebalance.realized_pnl, precision: 2) %></td>
+  </tr>
+  <tr>
+    <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Target</td>
+    <td style="padding: 8px; border: 1px solid #ddd;"><%= number_to_percentage(@hedge.target * 100, precision: 1) %></td>
+  </tr>
+  <tr>
+    <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Tolerance</td>
+    <td style="padding: 8px; border: 1px solid #ddd;"><%= number_to_percentage(@hedge.tolerance * 100, precision: 1) %></td>
+  </tr>
+  <tr>
+    <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Position</td>
+    <td style="padding: 8px; border: 1px solid #ddd;"><%= @position.asset0 %>/<%= @position.asset1 %></td>
+  </tr>
+  <tr>
+    <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Rebalanced At</td>
+    <td style="padding: 8px; border: 1px solid #ddd;"><%= @rebalance.rebalanced_at.strftime("%Y-%m-%d %H:%M:%S UTC") %></td>
+  </tr>
+</table>

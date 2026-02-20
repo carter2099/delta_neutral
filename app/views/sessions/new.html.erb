@@ -1,0 +1,20 @@
+<div class="mx-auto max-w-md w-full mt-20">
+  <div class="bg-gray-900 rounded-xl border border-gray-800 p-8">
+    <h1 class="font-bold text-3xl text-white mb-6">Sign in</h1>
+
+    <%= form_with url: session_url, class: "space-y-5" do |form| %>
+      <div>
+        <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", placeholder: "Email address", value: params[:email_address], class: "w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" %>
+      </div>
+
+      <div>
+        <%= form.password_field :password, required: true, autocomplete: "current-password", placeholder: "Password", maxlength: 72, class: "w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent" %>
+      </div>
+
+      <div class="flex items-center justify-between">
+        <%= form.submit "Sign in", class: "bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-lg font-medium transition cursor-pointer" %>
+        <%= link_to "Forgot password?", new_password_path, class: "text-gray-400 hover:text-white text-sm transition" %>
+      </div>
+    <% end %>
+  </div>
+</div>

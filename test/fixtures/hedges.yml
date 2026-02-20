@@ -1,0 +1,5 @@
+eth_hedge:
+  position: eth_usdc
+  target: "0.5000"
+  tolerance: "0.0500"
+  active: true
