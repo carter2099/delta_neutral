@@ -11,6 +11,7 @@ Delta Neutral is a single-user, self-hosted auto hedge rebalancer. It monitors U
 - **Background Jobs:** Solid Queue with recurring schedule
 - **Frontend:** Hotwire (Turbo + Stimulus), Tailwind CSS v4
 - **Asset Pipeline:** Propshaft + ImportMap
+- **Version:** Defined in `config/version.rb` as `DeltaNeutral::VERSION`, displayed in the navbar
 
 ## Architecture
 
@@ -81,6 +82,10 @@ bin/rails db:seed # Seed lookup tables + dev admin user (admin@example.com / pas
 ## Testing
 
 Tests use WebMock for HTTP stubbing and simple mock objects for SDK interactions. Service stubs are in `test/support/service_stubs.rb`.
+
+## Versioning
+
+The app version lives in `config/version.rb` as `DeltaNeutral::VERSION`. This is the single source of truth — it's loaded via `config/application.rb` and displayed in the navbar layout. When bumping the version, update that constant and tag the release (`git tag v0.0.2`).
 
 ## File Organization
 

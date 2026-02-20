@@ -26,7 +26,7 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div class="flex items-center justify-between h-16">
             <div class="flex items-center space-x-8">
-              <span class="text-xl font-bold text-white tracking-tight">Delta Neutral</span>
+              <span class="text-xl font-bold text-white tracking-tight">Delta Neutral <span class="text-xs font-normal text-gray-500">v<%= DeltaNeutral::VERSION %></span></span>
               <%= link_to "Dashboard", root_path, class: "text-gray-300 hover:text-white transition text-sm font-medium" %>
               <%= link_to "Positions", positions_path, class: "text-gray-300 hover:text-white transition text-sm font-medium" %>
               <%= link_to "Wallets", wallets_path, class: "text-gray-300 hover:text-white transition text-sm font-medium" %>
