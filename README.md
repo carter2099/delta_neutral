@@ -2,6 +2,10 @@
 
 Self-hosted delta-neutral hedging automation for Uniswap V3 concentrated liquidity positions. Monitors your CLPs and automatically rebalances short hedges on Hyperliquid to maintain a target hedge percentage within a configurable tolerance band.
 
+## WARNING
+
+Pre-alpha dev stage. Bugs and code quality issues present.
+
 ## How It Works
 
 1. Connect a wallet with Uniswap V3 positions
