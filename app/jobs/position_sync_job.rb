@@ -68,7 +68,8 @@ class PositionSyncJob < ApplicationJob
       Rails.logger.debug { "[PositionSyncJob] position #{position.id} has active hedge #{position.hedge.id}, fetching Hyperliquid positions" }
       all_positions = hyperliquid.get_positions
       [ position.asset0, position.asset1 ].each do |asset|
-        pos = all_positions.find { |p| p[:asset] == asset }
+        hl_asset = HedgeSyncJob::HYPERLIQUID_SYMBOL_MAP.fetch(asset, asset)
+        pos = all_positions.find { |p| p[:asset] == hl_asset }
         if pos
           Rails.logger.debug { "[PositionSyncJob] hedge PnL for #{asset}: unrealized=#{pos[:unrealized_pnl]}" }
           hedge_unrealized += pos[:unrealized_pnl]
