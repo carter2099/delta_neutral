@@ -72,9 +72,21 @@ All controllers require authentication (via Rails 8 generated `Authentication` c
 
 ## Environment Variables
 
-See `.env.example` for the full list. Required in production:
+**Setup:** Copy `.env.example` to `.env` and fill in the values. The `.env` file is gitignored.
+
+**How env vars are loaded:**
+- `dotenv-rails` (in the `:development, :test` Gemfile group) auto-loads `.env` via its Railtie during Rails boot
+- `bin/jobs` explicitly loads dotenv before Rails boot (`require "dotenv/load"`) to ensure Solid Queue worker processes always have access to `.env` vars, regardless of process forking behavior
+- `config/initializers/app_config.rb` validates that all required vars are present at boot time (in all environments except test) and raises immediately with a helpful error if any are missing
+
+**Required variables** (validated at boot in development and production):
 - `HYPERLIQUID_PRIVATE_KEY`, `HYPERLIQUID_WALLET_ADDRESS`
 - `UNISWAP_SUBGRAPH_URL`, `THEGRAPH_API_KEY`
+
+**If you add a new required env var:**
+1. Add it to `.env.example` with a blank or example value
+2. Add it to the `required_vars` list in `config/initializers/app_config.rb`
+3. Add it to the `env.secret` or `env.clear` section in `config/deploy.yml` for production
 
 ## Development
 

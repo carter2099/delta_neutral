@@ -1,5 +1,10 @@
 #!/usr/bin/env ruby
 
+# Load .env before Rails boots so env vars are available to initializers
+# and service objects regardless of how this process was started.
+require "bundler/setup"
+require "dotenv/load"
+
 require_relative "../config/environment"
 require "solid_queue/cli"
 

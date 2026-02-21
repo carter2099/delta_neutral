@@ -1,4 +1,4 @@
-if Rails.env.production?
+unless Rails.env.test?
   required_vars = %w[
     HYPERLIQUID_PRIVATE_KEY
     HYPERLIQUID_WALLET_ADDRESS
@@ -9,6 +9,7 @@ if Rails.env.production?
   missing = required_vars.select { |var| ENV[var].blank? }
 
   if missing.any?
-    raise "Missing required environment variables: #{missing.join(', ')}"
+    raise "Missing required environment variables: #{missing.join(', ')}. " \
+          "Ensure your .env file exists and contains these keys. See .env.example for reference."
   end
 end
