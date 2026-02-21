@@ -32,7 +32,7 @@
               <span class="inline-block px-2 py-1 rounded-full text-xs font-medium bg-gray-800 text-gray-500 border border-gray-700">Paused</span>
             <% end %>
           </td>
-          <td class="p-4 text-center text-gray-300"><%= hedge.short_rebalances.count %></td>
+          <td class="p-4 text-center text-gray-300"><%= hedge.short_rebalances.size %></td>
           <td class="p-4 text-right space-x-2">
             <%= link_to "Edit", edit_hedge_path(hedge), class: "text-blue-400 hover:text-blue-300 text-sm font-medium" %>
             <%= button_to "Sync", sync_now_hedge_path(hedge), method: :post, class: "text-blue-400 hover:text-blue-300 text-sm font-medium" %>

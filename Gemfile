@@ -63,6 +63,9 @@ end
 group :development do
   # Use console on exceptions pages [https://github.com/rails/web-console]
   gem "web-console"
+
+  # YARD documentation generator [https://yardoc.org]
+  gem "yard", require: false
 end
 
 group :test do

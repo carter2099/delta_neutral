@@ -14,7 +14,7 @@ class HyperliquidServiceTest < ActiveSupport::TestCase
   test "get_positions parses user state" do
     user_state = stub_hyperliquid_user_state(
       positions: [
-        { asset: "ETH", size: "-0.5", entry_price: "2000", unrealized_pnl: "-50", return_on_equity: "-0.025" }
+        { asset: "ETH", size: "-0.5", entry_price: "2000", unrealized_pnl: "-50" }
       ]
     )
 

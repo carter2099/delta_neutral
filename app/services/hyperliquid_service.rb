@@ -12,6 +12,25 @@ class HyperliquidService
   # Raised when a Hyperliquid order is rejected (e.g. below minimum value).
   class OrderError < StandardError; end
 
+  # Maps wrapped token symbols from Uniswap to Hyperliquid trading symbols.
+  SYMBOL_MAP = {
+    "WETH" => "ETH",
+    "WBTC" => "BTC",
+    "WMATIC" => "MATIC",
+    "WAVAX" => "AVAX",
+    "WSOL" => "SOL"
+  }.freeze
+
+  # Translates a Uniswap token symbol to its Hyperliquid equivalent.
+  #
+  # Returns the symbol unchanged if no mapping exists (e.g. +"USDC"+ stays +"USDC"+).
+  #
+  # @param symbol [String] the token symbol (e.g. +"WETH"+)
+  # @return [String] the Hyperliquid trading symbol (e.g. +"ETH"+)
+  def self.normalize_symbol(symbol)
+    SYMBOL_MAP.fetch(symbol, symbol)
+  end
+
   # @param private_key [String, nil] Hyperliquid signing key; falls back to
   #   +HYPERLIQUID_PRIVATE_KEY+
   # @param wallet_address [String, nil] wallet address for queries; falls back
@@ -59,8 +78,7 @@ class HyperliquidService
   # Returns all open perpetual positions for the configured wallet.
   #
   # @return [Array<Hash>] each hash includes +:asset+, +:size+,
-  #   +:entry_price+, +:unrealized_pnl+, +:return_on_equity+, and
-  #   +:liquidation_price+
+  #   +:entry_price+, +:unrealized_pnl+, and +:liquidation_price+
   def get_positions
     Rails.logger.debug { "[HyperliquidService] get_positions for #{@wallet_address}" }
     state = sdk.info.user_state(@wallet_address)
@@ -76,7 +94,6 @@ class HyperliquidService
         margin_used: BigDecimal(pos["marginUsed"]),
         mark_price: size.zero? ? BigDecimal("0") : (position_value / size.abs),
         unrealized_pnl: BigDecimal(pos["unrealizedPnl"]),
-        return_on_equity: BigDecimal(pos["returnOnEquity"]),
         liquidation_price: pos["liquidationPx"] ? BigDecimal(pos["liquidationPx"]) : nil
       }
     end

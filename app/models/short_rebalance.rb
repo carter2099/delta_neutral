@@ -8,6 +8,4 @@ class ShortRebalance < ApplicationRecord
   STATUS_FAILED = "failed"
 
   belongs_to :hedge
-
-  scope :failed, -> { where(status: STATUS_FAILED) }
 end

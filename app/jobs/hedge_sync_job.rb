@@ -42,15 +42,6 @@ class HedgeSyncJob < ApplicationJob
     Rails.logger.debug { "[HedgeSyncJob] complete" }
   end
 
-  # Maps wrapped token symbols from Uniswap to Hyperliquid trading symbols.
-  HYPERLIQUID_SYMBOL_MAP = {
-    "WETH" => "ETH",
-    "WBTC" => "BTC",
-    "WMATIC" => "MATIC",
-    "WAVAX" => "AVAX",
-    "WSOL" => "SOL"
-  }.freeze
-
   private
 
   # Checks and rebalances both assets for a hedge, if the position is active.
@@ -87,7 +78,7 @@ class HedgeSyncJob < ApplicationJob
   # @param hyperliquid [HyperliquidService] configured Hyperliquid client
   # @return [void]
   def check_and_rebalance(hedge, asset, pool_amount, hyperliquid)
-    hl_asset = HYPERLIQUID_SYMBOL_MAP.fetch(asset, asset)
+    hl_asset = HyperliquidService.normalize_symbol(asset)
     Rails.logger.debug { "[HedgeSyncJob] hedge #{hedge.id} #{asset} (hl: #{hl_asset}): pool_amount=#{pool_amount}" }
     current_position = hyperliquid.get_position(hl_asset)
     current_short = current_position ? current_position[:size].abs : BigDecimal("0")
@@ -112,6 +103,7 @@ class HedgeSyncJob < ApplicationJob
 
     Rails.logger.debug { "[HedgeSyncJob] hedge #{hedge.id} #{asset}: REBALANCE NEEDED" }
     realized_pnl = BigDecimal("0")
+
     begin
       # Close existing short and get realized PnL from fills
       if current_short > 0

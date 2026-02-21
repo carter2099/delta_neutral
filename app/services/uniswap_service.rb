@@ -24,14 +24,10 @@ class UniswapService
           id
         }
         token0 {
-          id
           symbol
-          decimals
         }
         token1 {
-          id
           symbol
-          decimals
         }
       }
     }
@@ -58,12 +54,10 @@ class UniswapService
         token1Price
         liquidity
         token0 {
-          id
           symbol
           derivedETH
         }
         token1 {
-          id
           symbol
           derivedETH
         }

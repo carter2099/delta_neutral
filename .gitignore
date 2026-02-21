@@ -43,3 +43,6 @@
 
 # mac
 .DS_Store
+
+# YARD documentation cache
+.yardoc/

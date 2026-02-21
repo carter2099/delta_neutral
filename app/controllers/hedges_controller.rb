@@ -21,22 +21,19 @@ class HedgesController < ApplicationController
     @hedge = find_hedge
     @rebalances = @hedge.short_rebalances.order(rebalanced_at: :desc).limit(10)
 
+    position = @hedge.position
+
     begin
       hyperliquid = HyperliquidService.new
-      position = @hedge.position
-      symbols = [ position.asset0, position.asset1 ].map { |a| HedgeSyncJob::HYPERLIQUID_SYMBOL_MAP.fetch(a, a) }
+      symbols = [ position.asset0, position.asset1 ].map { |a| HyperliquidService.normalize_symbol(a) }
       @shorts = symbols.filter_map { |sym| hyperliquid.get_position(sym) }
     rescue => e
       Rails.logger.error("[HedgesController] Failed to fetch shorts for hedge #{@hedge.id}: #{e.message}")
       @shorts = []
       flash.now[:alert] = "Could not load Hyperliquid positions."
     end
-
-    # Build per-asset divergence metrics for the UI cards
-    position = @hedge.position
-    hyperliquid ||= nil
     @asset_metrics = [ [ position.asset0, position.asset0_amount ], [ position.asset1, position.asset1_amount ] ].map do |asset, pool_amount|
-      hl_asset = HedgeSyncJob::HYPERLIQUID_SYMBOL_MAP.fetch(asset, asset)
+      hl_asset = HyperliquidService.normalize_symbol(asset)
       short_data = @shorts.find { |s| s[:asset] == hl_asset }
       current_short = short_data ? short_data[:size].abs : BigDecimal("0")
       sz_decimals = hyperliquid ? hyperliquid.sz_decimals(hl_asset) : 6
@@ -44,8 +41,7 @@ class HedgesController < ApplicationController
 
       if target_short > 0
         divergence = ((current_short - target_short) / target_short)
-        rebalance_threshold = @hedge.tolerance
-        rebalance_proximity = divergence.abs / rebalance_threshold
+        rebalance_proximity = divergence.abs / @hedge.tolerance
       else
         divergence = BigDecimal("0")
         rebalance_proximity = BigDecimal("0")
@@ -138,7 +134,7 @@ class HedgesController < ApplicationController
       hyperliquid = HyperliquidService.new
       position = @hedge.position
       [ position.asset0, position.asset1 ].each do |asset|
-        hl_asset = HedgeSyncJob::HYPERLIQUID_SYMBOL_MAP.fetch(asset, asset)
+        hl_asset = HyperliquidService.normalize_symbol(asset)
         hyperliquid.close_short(asset: hl_asset)
       end
     rescue => e
