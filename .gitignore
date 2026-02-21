@@ -40,3 +40,6 @@
 # Claude Code
 /.claude/settings.local.json
 /.claude/worktrees/
+
+# mac
+.DS_Store
