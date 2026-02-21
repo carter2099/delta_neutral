@@ -37,9 +37,9 @@
       <div class="flex items-center justify-between mb-3">
         <p class="text-white font-semibold text-lg"><%= m[:asset] %></p>
         <% if m[:needs_rebalance] %>
-          <%= button_to sync_now_hedge_path(@hedge), method: :post, class: "inline-flex items-center gap-1 text-xs font-medium bg-red-500/20 text-red-400 hover:bg-red-500/30 px-2 py-0.5 rounded-full transition cursor-pointer" do %>
-            Rebalance needed &middot; Sync now
-          <% end %>
+          <span class="inline-flex items-center gap-1 text-xs font-medium bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full">
+            Rebalance needed
+          </span>
         <% end %>
       </div>
 
