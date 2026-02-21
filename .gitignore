@@ -36,3 +36,7 @@
 
 /app/assets/builds/*
 !/app/assets/builds/.keep
+
+# Claude Code
+/.claude/settings.local.json
+/.claude/worktrees/
