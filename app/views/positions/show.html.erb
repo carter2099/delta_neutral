@@ -20,6 +20,12 @@
   </div>
 </div>
 
+<% pool_unrealized = @position.entry_value_usd ? @position.total_value_usd - @position.entry_value_usd : nil %>
+<% latest_snap = @pnl_snapshots.first %>
+<% hedge_unrealized = latest_snap&.hedge_unrealized.to_d %>
+<% hedge_realized = latest_snap&.hedge_realized.to_d %>
+<% total_pnl = pool_unrealized ? pool_unrealized + hedge_unrealized : hedge_unrealized %>
+
 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
   <div class="bg-gray-900 rounded-xl border border-gray-800 p-4 space-y-2">
     <p class="text-gray-400 text-xs uppercase tracking-wide"><%= @position.asset0 %></p>
@@ -34,7 +40,11 @@
   <div class="bg-gray-900 rounded-xl border border-gray-800 p-4 space-y-2">
     <p class="text-gray-400 text-xs uppercase tracking-wide">Total Pooled Value</p>
     <p class="text-xl font-bold text-white">$<%= number_with_precision(@position.total_value_usd, precision: 2) %></p>
-    <p class="text-gray-500 text-sm">$<%= number_with_precision(@position.asset0_amount * @position.asset0_price_usd, precision: 2) %> &middot; $<%= number_with_precision(@position.asset1_amount * @position.asset1_price_usd, precision: 2) %></p>
+    <% if @position.entry_value_usd %>
+      <p class="text-gray-500 text-sm">Entry: $<%= number_with_precision(@position.entry_value_usd, precision: 2) %></p>
+    <% else %>
+      <p class="text-gray-500 text-sm">$<%= number_with_precision(@position.asset0_amount * @position.asset0_price_usd, precision: 2) %> &middot; $<%= number_with_precision(@position.asset1_amount * @position.asset1_price_usd, precision: 2) %></p>
+    <% end %>
   </div>
   <div class="bg-gray-900 rounded-xl border border-gray-800 p-4 space-y-2">
     <p class="text-gray-400 text-xs uppercase tracking-wide">Hedge</p>
@@ -53,25 +63,26 @@
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
   <div>
     <h2 class="text-xl font-semibold text-white mb-4">PnL Summary</h2>
-    <% latest = @pnl_snapshots.first %>
     <div class="grid grid-cols-2 gap-4">
       <div class="bg-gray-900 rounded-xl border border-gray-800 p-5">
-        <p class="text-gray-400 text-xs uppercase tracking-wide">Realized PnL</p>
-        <% realized = latest&.hedge_realized.to_d %>
-        <p class="text-2xl font-bold mt-2 <%= realized >= 0 ? 'text-green-400' : 'text-red-400' %>">
-          $<%= number_with_precision(realized, precision: 2) %>
+        <p class="text-gray-400 text-xs uppercase tracking-wide">Total Unrealized</p>
+        <p class="text-2xl font-bold mt-2 <%= total_pnl >= 0 ? 'text-green-400' : 'text-red-400' %>">
+          $<%= number_with_precision(total_pnl, precision: 2) %>
+        </p>
+        <p class="text-gray-500 text-sm mt-1">
+          Pool: <span class="<%= (pool_unrealized || 0) >= 0 ? 'text-green-400' : 'text-red-400' %>">$<%= number_with_precision(pool_unrealized || 0, precision: 2) %></span>
+          &middot; Hedge: <span class="<%= hedge_unrealized >= 0 ? 'text-green-400' : 'text-red-400' %>">$<%= number_with_precision(hedge_unrealized, precision: 2) %></span>
         </p>
       </div>
       <div class="bg-gray-900 rounded-xl border border-gray-800 p-5">
-        <p class="text-gray-400 text-xs uppercase tracking-wide">Unrealized PnL</p>
-        <% unrealized = latest&.hedge_unrealized.to_d %>
-        <p class="text-2xl font-bold mt-2 <%= unrealized >= 0 ? 'text-green-400' : 'text-red-400' %>">
-          $<%= number_with_precision(unrealized, precision: 2) %>
+        <p class="text-gray-400 text-xs uppercase tracking-wide">Realized PnL</p>
+        <p class="text-2xl font-bold mt-2 <%= hedge_realized >= 0 ? 'text-green-400' : 'text-red-400' %>">
+          $<%= number_with_precision(hedge_realized, precision: 2) %>
         </p>
       </div>
     </div>
-    <% if latest %>
-      <p class="text-gray-600 text-xs mt-3">As of <%= latest.captured_at.strftime("%m/%d/%Y %H:%M") %></p>
+    <% if latest_snap %>
+      <p class="text-gray-600 text-xs mt-3">As of <%= latest_snap.captured_at.strftime("%m/%d/%Y %H:%M") %></p>
     <% end %>
   </div>
 

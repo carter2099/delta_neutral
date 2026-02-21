@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_20_035602) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_21_162642) do
   create_table "dexes", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name", null: false
@@ -46,6 +46,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_20_035602) do
     t.datetime "created_at", null: false
     t.decimal "hedge_realized", precision: 20, scale: 8
     t.decimal "hedge_unrealized", precision: 20, scale: 8
+    t.decimal "pool_unrealized", precision: 20, scale: 8
     t.integer "position_id", null: false
     t.datetime "updated_at", null: false
     t.index ["position_id"], name: "index_pnl_snapshots_on_position_id"
@@ -61,6 +62,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_20_035602) do
     t.decimal "asset1_price_usd", precision: 20, scale: 8
     t.datetime "created_at", null: false
     t.integer "dex_id", null: false
+    t.decimal "entry_value_usd", precision: 20, scale: 8
     t.string "external_id"
     t.string "pool_address"
     t.datetime "updated_at", null: false

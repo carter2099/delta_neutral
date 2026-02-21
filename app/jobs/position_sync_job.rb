@@ -61,6 +61,11 @@ class PositionSyncJob < ApplicationJob
     )
     Rails.logger.debug { "[PositionSyncJob] position #{position.id} price update: asset0 #{old_prices[0]} → #{position.asset0_price_usd}, asset1 #{old_prices[1]} → #{position.asset1_price_usd}" }
 
+    if position.entry_value_usd.nil?
+      position.update!(entry_value_usd: position.total_value_usd)
+      Rails.logger.debug { "[PositionSyncJob] position #{position.id} entry_value_usd set to #{position.entry_value_usd}" }
+    end
+
     hedge_unrealized = BigDecimal("0")
     hedge_realized = BigDecimal("0")
 
@@ -84,6 +89,8 @@ class PositionSyncJob < ApplicationJob
       Rails.logger.debug { "[PositionSyncJob] position #{position.id} has no active hedge" }
     end
 
+    pool_unrealized = position.entry_value_usd ? position.total_value_usd - position.entry_value_usd : BigDecimal("0")
+
     PnlSnapshot.create!(
       position: position,
       captured_at: Time.current,
@@ -92,7 +99,8 @@ class PositionSyncJob < ApplicationJob
       asset0_price_usd: position.asset0_price_usd,
       asset1_price_usd: position.asset1_price_usd,
       hedge_unrealized: hedge_unrealized,
-      hedge_realized: hedge_realized
+      hedge_realized: hedge_realized,
+      pool_unrealized: pool_unrealized
     )
     Rails.logger.debug { "[PositionSyncJob] position #{position.id} PnlSnapshot created" }
   end
