@@ -18,5 +18,7 @@ Rails.application.routes.draw do
     post :sync_now, on: :member
   end
 
+  mount MissionControl::Jobs::Engine, at: "/jobs"
+
   get "up" => "rails/health#show", as: :rails_health_check
 end

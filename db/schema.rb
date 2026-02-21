@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_21_162642) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_21_200000) do
   create_table "dexes", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name", null: false
@@ -43,11 +43,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_21_162642) do
     t.decimal "asset1_amount", precision: 30, scale: 18
     t.decimal "asset1_price_usd", precision: 20, scale: 8
     t.datetime "captured_at"
+    t.decimal "collected_fees0", precision: 30, scale: 18
+    t.decimal "collected_fees1", precision: 30, scale: 18
     t.datetime "created_at", null: false
     t.decimal "hedge_realized", precision: 20, scale: 8
     t.decimal "hedge_unrealized", precision: 20, scale: 8
     t.decimal "pool_unrealized", precision: 20, scale: 8
     t.integer "position_id", null: false
+    t.decimal "uncollected_fees0", precision: 30, scale: 18
+    t.decimal "uncollected_fees1", precision: 30, scale: 18
     t.datetime "updated_at", null: false
     t.index ["position_id"], name: "index_pnl_snapshots_on_position_id"
   end
@@ -96,10 +100,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_21_162642) do
     t.string "asset"
     t.datetime "created_at", null: false
     t.integer "hedge_id", null: false
+    t.text "message"
     t.decimal "new_short_size", precision: 20, scale: 8
     t.decimal "old_short_size", precision: 20, scale: 8
     t.decimal "realized_pnl", precision: 20, scale: 8
     t.datetime "rebalanced_at"
+    t.string "status", default: "success", null: false
     t.datetime "updated_at", null: false
     t.index ["hedge_id"], name: "index_short_rebalances_on_hedge_id"
   end

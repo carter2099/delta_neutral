@@ -101,41 +101,70 @@ class HedgeSyncJob < ApplicationJob
       return
     end
 
+    # Skip if the last 3 rebalances for this asset all failed — avoids
+    # polluting history with repeated identical failures (e.g. below $10 min).
+    # The streak resets naturally when conditions change enough for one to succeed.
+    recent = hedge.short_rebalances.where(asset: asset).where(rebalanced_at: 24.hours.ago..).order(rebalanced_at: :desc).limit(3)
+    if recent.size == 3 && recent.all? { |r| r.status == ShortRebalance::STATUS_FAILED }
+      Rails.logger.debug { "[HedgeSyncJob] hedge #{hedge.id} #{asset}: skipping — last 3 rebalances all failed" }
+      return
+    end
+
     Rails.logger.debug { "[HedgeSyncJob] hedge #{hedge.id} #{asset}: REBALANCE NEEDED" }
     realized_pnl = BigDecimal("0")
+    new_short_size = target_short
 
-    # Close existing short and get realized PnL from fills
-    if current_short > 0
-      Rails.logger.debug { "[HedgeSyncJob] hedge #{hedge.id} #{asset}: closing existing short (size=#{current_short})" }
-      before_close = Time.current
-      hyperliquid.close_short(asset: hl_asset)
-      realized_pnl = fetch_realized_pnl(hyperliquid, hl_asset, before_close)
-      Rails.logger.debug { "[HedgeSyncJob] hedge #{hedge.id} #{asset}: realized_pnl=#{realized_pnl}" }
+    begin
+      # Close existing short and get realized PnL from fills
+      if current_short > 0
+        Rails.logger.debug { "[HedgeSyncJob] hedge #{hedge.id} #{asset}: closing existing short (size=#{current_short})" }
+        before_close = Time.current
+        hyperliquid.close_short(asset: hl_asset)
+        realized_pnl = fetch_realized_pnl(hyperliquid, hl_asset, before_close)
+        Rails.logger.debug { "[HedgeSyncJob] hedge #{hedge.id} #{asset}: realized_pnl=#{realized_pnl}" }
+      end
+
+      # Open new short at target size (not needed when target or pool amt is 0)
+      if target_short > 0
+        setting = hedge.position.user.setting
+        leverage = setting&.hyperliquid_leverage || 3
+        is_cross = setting&.hyperliquid_cross_margin.nil? ? true : setting.hyperliquid_cross_margin
+        Rails.logger.debug { "[HedgeSyncJob] hedge #{hedge.id} #{asset}: setting leverage=#{leverage}, is_cross=#{is_cross}" }
+        hyperliquid.set_leverage(asset: hl_asset, leverage: leverage, is_cross: is_cross)
+        Rails.logger.debug { "[HedgeSyncJob] hedge #{hedge.id} #{asset}: opening new short (size=#{target_short})" }
+        hyperliquid.open_short(asset: hl_asset, size: target_short)
+      else
+        Rails.logger.debug { "[HedgeSyncJob] hedge #{hedge.id} #{asset}: target is zero, skipping open" }
+      end
+
+      rebalance = hedge.short_rebalances.create!(
+        asset: asset,
+        old_short_size: current_short,
+        new_short_size: target_short,
+        realized_pnl: realized_pnl,
+        status: ShortRebalance::STATUS_SUCCESS,
+        rebalanced_at: Time.current
+      )
+      Rails.logger.debug { "[HedgeSyncJob] hedge #{hedge.id} #{asset}: ShortRebalance ##{rebalance.id} created (#{current_short} → #{target_short}, realized_pnl=#{realized_pnl})" }
+
+      HedgeRebalanceMailer.rebalance_notification(rebalance).deliver_later
+    rescue => e
+      # Close succeeded but open failed — short is now 0; if close also failed, size unchanged
+      new_short_size = current_short > 0 && defined?(before_close) ? BigDecimal("0") : current_short
+
+      rebalance = hedge.short_rebalances.create!(
+        asset: asset,
+        old_short_size: current_short,
+        new_short_size: new_short_size,
+        realized_pnl: realized_pnl,
+        status: ShortRebalance::STATUS_FAILED,
+        message: "Attempted to open short of #{target_short} #{hl_asset}: #{e.message}",
+        rebalanced_at: Time.current
+      )
+      Rails.logger.error("[HedgeSyncJob] hedge #{hedge.id} #{asset}: rebalance failed — ShortRebalance ##{rebalance.id}: #{e.message}")
+
+      raise
     end
-
-    # Open new short at target size (not needed when target or pool amt is 0)
-    if target_short > 0
-      setting = hedge.position.user.setting
-      leverage = setting&.hyperliquid_leverage || 3
-      is_cross = setting&.hyperliquid_cross_margin.nil? ? true : setting.hyperliquid_cross_margin
-      Rails.logger.debug { "[HedgeSyncJob] hedge #{hedge.id} #{asset}: setting leverage=#{leverage}, is_cross=#{is_cross}" }
-      hyperliquid.set_leverage(asset: hl_asset, leverage: leverage, is_cross: is_cross)
-      Rails.logger.debug { "[HedgeSyncJob] hedge #{hedge.id} #{asset}: opening new short (size=#{target_short})" }
-      hyperliquid.open_short(asset: hl_asset, size: target_short)
-    else
-      Rails.logger.debug { "[HedgeSyncJob] hedge #{hedge.id} #{asset}: target is zero, skipping open" }
-    end
-
-    rebalance = hedge.short_rebalances.create!(
-      asset: asset,
-      old_short_size: current_short,
-      new_short_size: target_short,
-      realized_pnl: realized_pnl,
-      rebalanced_at: Time.current
-    )
-    Rails.logger.debug { "[HedgeSyncJob] hedge #{hedge.id} #{asset}: ShortRebalance ##{rebalance.id} created (#{current_short} → #{target_short}, realized_pnl=#{realized_pnl})" }
-
-    HedgeRebalanceMailer.rebalance_notification(rebalance).deliver_later
   end
 
   # Fetches the realized P&L for an asset from Hyperliquid fill data.

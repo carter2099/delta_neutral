@@ -63,6 +63,7 @@
         <thead>
           <tr class="border-b border-gray-800">
             <th class="text-left text-gray-400 text-xs uppercase tracking-wide p-4">Asset</th>
+            <th class="text-center text-gray-400 text-xs uppercase tracking-wide p-4"></th>
             <th class="text-right text-gray-400 text-xs uppercase tracking-wide p-4">Size Change</th>
             <th class="text-right text-gray-400 text-xs uppercase tracking-wide p-4">PnL</th>
             <th class="text-right text-gray-400 text-xs uppercase tracking-wide p-4">Time</th>
@@ -72,6 +73,13 @@
           <% @recent_rebalances.each do |rebalance| %>
             <tr class="border-b border-gray-800/50 hover:bg-gray-800/30">
               <td class="p-4 font-medium text-white"><%= rebalance.asset %></td>
+              <td class="p-4 text-center">
+                <% if rebalance.status == ShortRebalance::STATUS_FAILED %>
+                  <span class="inline-block w-2 h-2 rounded-full bg-red-500" title="Failed: <%= rebalance.message %>"></span>
+                <% else %>
+                  <span class="inline-block w-2 h-2 rounded-full bg-green-500"></span>
+                <% end %>
+              </td>
               <td class="p-4 text-right text-gray-300">
                 <%= number_with_precision(rebalance.old_short_size, precision: 4) %> &rarr; <%= number_with_precision(rebalance.new_short_size, precision: 4) %>
               </td>
@@ -83,7 +91,7 @@
           <% end %>
           <% if @recent_rebalances.empty? %>
             <tr>
-              <td colspan="4" class="p-8 text-center text-gray-500">No rebalances yet.</td>
+              <td colspan="5" class="p-8 text-center text-gray-500">No rebalances yet.</td>
             </tr>
           <% end %>
         </tbody>

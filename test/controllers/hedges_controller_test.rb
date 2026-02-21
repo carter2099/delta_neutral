@@ -14,6 +14,7 @@ class HedgesControllerTest < ActionDispatch::IntegrationTest
     hedge = hedges(:eth_hedge)
     mock_service = Object.new
     mock_service.define_singleton_method(:get_position) { |_| nil }
+    mock_service.define_singleton_method(:sz_decimals) { |_| 6 }
 
     HyperliquidService.stub(:new, mock_service) do
       get hedge_path(hedge)

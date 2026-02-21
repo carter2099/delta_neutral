@@ -93,6 +93,7 @@
         <thead>
           <tr class="border-b border-gray-800">
             <th class="text-left text-gray-400 text-xs uppercase tracking-wide p-4">Asset</th>
+            <th class="text-center text-gray-400 text-xs uppercase tracking-wide p-4"></th>
             <th class="text-right text-gray-400 text-xs uppercase tracking-wide p-4">Old &rarr; New</th>
             <th class="text-right text-gray-400 text-xs uppercase tracking-wide p-4">PnL</th>
             <th class="text-right text-gray-400 text-xs uppercase tracking-wide p-4">Time</th>
@@ -102,6 +103,13 @@
           <% @rebalances.each do |r| %>
             <tr class="border-b border-gray-800/50">
               <td class="p-4 text-white font-medium"><%= r.asset %></td>
+              <td class="p-4 text-center">
+                <% if r.status == ShortRebalance::STATUS_FAILED %>
+                  <span class="inline-block w-2 h-2 rounded-full bg-red-500" title="Failed: <%= r.message %>"></span>
+                <% else %>
+                  <span class="inline-block w-2 h-2 rounded-full bg-green-500"></span>
+                <% end %>
+              </td>
               <td class="p-4 text-right text-gray-300">
                 <%= number_with_precision(r.old_short_size, precision: 4) %> &rarr; <%= number_with_precision(r.new_short_size, precision: 4) %>
               </td>
@@ -112,7 +120,7 @@
             </tr>
           <% end %>
           <% if @rebalances.empty? %>
-            <tr><td colspan="4" class="p-8 text-center text-gray-500">No rebalances yet.</td></tr>
+            <tr><td colspan="5" class="p-8 text-center text-gray-500">No rebalances yet.</td></tr>
           <% end %>
         </tbody>
       </table>

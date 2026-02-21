@@ -17,6 +17,8 @@ Each asset in a pair is hedged independently, allowing for asymmetric movements.
 - **Per-Asset Independence** - The two assets in a position are hedged separately
 - **PnL Tracking** - Realized and unrealized P&L captured from Hyperliquid fill data
 - **Email Notifications** - Sent on every hedge rebalance with before/after short sizes
+- **Failed Rebalance Visibility** - Failed rebalances are recorded with error details and shown in the UI; consecutive failures (3 within 24h) trigger a circuit breaker to stop retrying
+- **Job Dashboard** - Solid Queue admin UI at `/jobs` for inspecting queues, retrying failed jobs, and monitoring background work
 - **Dashboard** - Real-time portfolio overview with active positions, hedges, and rebalance history
 - **Multi-Network** - Supports wallets on Ethereum, Arbitrum, Base, Optimism, and Polygon
 

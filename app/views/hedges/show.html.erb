@@ -27,25 +27,49 @@
   </div>
 </div>
 
-<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-  <div class="bg-gray-900 rounded-xl border border-gray-800 p-4">
-    <p class="text-gray-400 text-xs uppercase tracking-wide">Status</p>
-    <p class="text-xl font-bold mt-1 <%= @hedge.active? ? 'text-green-400' : 'text-gray-500' %>">
-      <%= @hedge.active? ? "Active" : "Paused" %>
-    </p>
-  </div>
-  <div class="bg-gray-900 rounded-xl border border-gray-800 p-4">
-    <p class="text-gray-400 text-xs uppercase tracking-wide">Target</p>
-    <p class="text-xl font-bold text-white mt-1"><%= number_to_percentage(@hedge.target * 100, precision: 1) %></p>
-  </div>
-  <div class="bg-gray-900 rounded-xl border border-gray-800 p-4">
-    <p class="text-gray-400 text-xs uppercase tracking-wide">Tolerance</p>
-    <p class="text-xl font-bold text-white mt-1"><%= number_to_percentage(@hedge.tolerance * 100, precision: 1) %></p>
-  </div>
-  <div class="bg-gray-900 rounded-xl border border-gray-800 p-4">
-    <p class="text-gray-400 text-xs uppercase tracking-wide">Total Rebalances</p>
-    <p class="text-xl font-bold text-white mt-1"><%= @rebalances.size %></p>
-  </div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10">
+  <% @asset_metrics.each do |m| %>
+    <% divergence_pct = (m[:divergence] * 100).round(2) %>
+    <% proximity_pct = [ m[:rebalance_proximity] * 100, 100 ].min.round(1) %>
+    <% bar_color = m[:needs_rebalance] ? "bg-red-500" : proximity_pct >= 75 ? "bg-yellow-500" : "bg-green-500" %>
+    <% divergence_color = m[:needs_rebalance] ? "text-red-400" : divergence_pct.abs >= (@hedge.tolerance * 100 * 0.75) ? "text-yellow-400" : "text-green-400" %>
+    <div class="bg-gray-900 rounded-xl border border-gray-800 p-5">
+      <div class="flex items-center justify-between mb-3">
+        <p class="text-white font-semibold text-lg"><%= m[:asset] %></p>
+        <% if m[:needs_rebalance] %>
+          <%= button_to sync_now_hedge_path(@hedge), method: :post, class: "inline-flex items-center gap-1 text-xs font-medium bg-red-500/20 text-red-400 hover:bg-red-500/30 px-2 py-0.5 rounded-full transition cursor-pointer" do %>
+            Rebalance needed &middot; Sync now
+          <% end %>
+        <% end %>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 mb-4">
+        <div>
+          <p class="text-gray-400 text-xs uppercase tracking-wide">Divergence</p>
+          <p class="text-xl font-bold mt-1 <%= divergence_color %>">
+            <%= divergence_pct >= 0 ? "+" : "" %><%= divergence_pct %>%
+          </p>
+        </div>
+        <div>
+          <p class="text-gray-400 text-xs uppercase tracking-wide">Short / Target</p>
+          <p class="text-sm font-medium text-gray-300 mt-1">
+            <%= number_with_precision(m[:current_short], precision: m[:sz_decimals]) %> / <%= number_with_precision(m[:target_short], precision: m[:sz_decimals]) %>
+          </p>
+        </div>
+      </div>
+
+      <div>
+        <div class="flex items-center justify-between mb-1">
+          <p class="text-gray-400 text-xs uppercase tracking-wide">Rebalance proximity</p>
+          <p class="text-xs font-medium <%= divergence_color %>"><%= proximity_pct %>%</p>
+        </div>
+        <div class="w-full bg-gray-800 rounded-full h-2">
+          <div class="<%= bar_color %> h-2 rounded-full transition-all" style="width: <%= proximity_pct %>%"></div>
+        </div>
+        <p class="text-gray-500 text-xs mt-1">Tolerance: &plusmn;<%= number_to_percentage(@hedge.tolerance * 100, precision: 1) %></p>
+      </div>
+    </div>
+  <% end %>
 </div>
 
 <h2 class="text-xl font-semibold text-white mb-4">Open Shorts</h2>
@@ -95,6 +119,7 @@
     <thead>
       <tr class="border-b border-gray-800">
         <th class="text-left text-gray-400 text-xs uppercase tracking-wide p-4">Asset</th>
+        <th class="text-center text-gray-400 text-xs uppercase tracking-wide p-4">Status</th>
         <th class="text-right text-gray-400 text-xs uppercase tracking-wide p-4">Old Short</th>
         <th class="text-right text-gray-400 text-xs uppercase tracking-wide p-4">New Short</th>
         <th class="text-right text-gray-400 text-xs uppercase tracking-wide p-4">Realized PnL</th>
@@ -105,6 +130,19 @@
       <% @rebalances.each do |r| %>
         <tr class="border-b border-gray-800/50">
           <td class="p-4 text-white font-medium"><%= r.asset %></td>
+          <td class="p-4 text-center">
+            <% if r.status == ShortRebalance::STATUS_FAILED %>
+              <details>
+                <summary class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-900/50 text-red-400 border border-red-800 cursor-pointer hover:bg-red-900/70 transition">
+                  Failed
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" class="w-3 h-3"><path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" /></svg>
+                </summary>
+                <p class="text-red-400 text-xs mt-2 text-left"><%= r.message %></p>
+              </details>
+            <% else %>
+              <span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-green-900/50 text-green-400 border border-green-800">Success</span>
+            <% end %>
+          </td>
           <td class="p-4 text-right text-gray-300"><%= number_with_precision(r.old_short_size, precision: 6) %></td>
           <td class="p-4 text-right text-white"><%= number_with_precision(r.new_short_size, precision: 6) %></td>
           <td class="p-4 text-right <%= r.realized_pnl >= 0 ? 'text-green-400' : 'text-red-400' %>">
@@ -115,7 +153,7 @@
       <% end %>
       <% if @rebalances.empty? %>
         <tr>
-          <td colspan="5" class="p-8 text-center text-gray-500">No rebalances yet.</td>
+          <td colspan="6" class="p-8 text-center text-gray-500">No rebalances yet.</td>
         </tr>
       <% end %>
     </tbody>

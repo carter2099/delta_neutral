@@ -13,6 +13,7 @@ class HedgeLifecycleTest < ActionDispatch::IntegrationTest
 
     mock_service = Object.new
     mock_service.define_singleton_method(:get_position) { |_| nil }
+    mock_service.define_singleton_method(:sz_decimals) { |_| 6 }
     mock_service.define_singleton_method(:close_short) { |**_| nil }
 
     HyperliquidService.stub(:new, mock_service) do

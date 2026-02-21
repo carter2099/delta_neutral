@@ -31,6 +31,38 @@ class HedgesController < ApplicationController
       @shorts = []
       flash.now[:alert] = "Could not load Hyperliquid positions."
     end
+
+    # Build per-asset divergence metrics for the UI cards
+    position = @hedge.position
+    hyperliquid ||= nil
+    @asset_metrics = [ [ position.asset0, position.asset0_amount ], [ position.asset1, position.asset1_amount ] ].map do |asset, pool_amount|
+      hl_asset = HedgeSyncJob::HYPERLIQUID_SYMBOL_MAP.fetch(asset, asset)
+      short_data = @shorts.find { |s| s[:asset] == hl_asset }
+      current_short = short_data ? short_data[:size].abs : BigDecimal("0")
+      sz_decimals = hyperliquid ? hyperliquid.sz_decimals(hl_asset) : 6
+      target_short = (pool_amount * @hedge.target).floor(sz_decimals)
+
+      if target_short > 0
+        divergence = ((current_short - target_short) / target_short)
+        rebalance_threshold = @hedge.tolerance
+        rebalance_proximity = divergence.abs / rebalance_threshold
+      else
+        divergence = BigDecimal("0")
+        rebalance_threshold = @hedge.tolerance
+        rebalance_proximity = BigDecimal("0")
+      end
+
+      {
+        asset: asset,
+        pool_amount: pool_amount,
+        current_short: current_short,
+        target_short: target_short,
+        sz_decimals: sz_decimals,
+        divergence: divergence,
+        rebalance_proximity: rebalance_proximity,
+        needs_rebalance: @hedge.needs_rebalance?(pool_amount, current_short)
+      }
+    end
   end
 
   # GET /hedges/new

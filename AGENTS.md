@@ -22,7 +22,7 @@ User
 ├── Wallet (address, network)
 │   └── Position (asset pair, amounts, prices, external_id)
 │       ├── Hedge (target%, tolerance%, active)
-│       │   └── ShortRebalance (old/new short size, realized PnL)
+│       │   └── ShortRebalance (old/new short size, realized PnL, status, message)
 │       └── PnlSnapshot (captured amounts, prices, hedge PnL)
 ├── Network (lookup: ethereum, arbitrum, base, optimism, polygon)
 └── Dex (lookup: uniswap, hyperliquid)
@@ -53,6 +53,10 @@ end
 
 **Per-asset independence:** The two assets in a position are managed independently. When a pool asset drops to zero (position fully out of range on that side), its target short is also zero, so `needs_rebalance?` triggers on the existing open short, closes it, records a `ShortRebalance` with `new_short_size: 0`, and sends the owner a `rebalance_notification`. The hedge stays active so the sibling asset's short continues to be managed. If the asset re-enters range, the next sync detects `current_short: 0` vs `target_short > 0` and reopens the short automatically.
 
+**Failed rebalance tracking:** Every rebalance attempt is recorded as a `ShortRebalance` with `status: "success"` or `status: "failed"`. Failed records include a `message` with the attempted order size and error details (e.g., Hyperliquid's $10 minimum order rejection). The UI shows failed rebalances with a clickable red badge that expands to reveal the error message.
+
+**Consecutive failure circuit breaker:** If the last 3 rebalances for a given hedge+asset (within 24 hours) all failed, `HedgeSyncJob` skips further attempts for that asset. This prevents polluting the rebalance history with repeated identical failures (e.g., an order that's permanently below the $10 minimum). The circuit breaker resets naturally when a rebalance succeeds, when failures age past 24 hours, or when the user adjusts hedge settings.
+
 ### Controllers
 
 All controllers require authentication (via Rails 8 generated `Authentication` concern):
@@ -60,6 +64,7 @@ All controllers require authentication (via Rails 8 generated `Authentication` c
 - **WalletsController** — CRUD + sync_now
 - **PositionsController** — Index/show + sync_now (with PnL/rebalance history)
 - **HedgesController** — Full CRUD + sync_now
+- **Mission Control Jobs** — Solid Queue dashboard mounted at `/jobs` (via `mission_control-jobs` gem, inherits app auth via `base_controller_class`)
 
 ### Email
 
