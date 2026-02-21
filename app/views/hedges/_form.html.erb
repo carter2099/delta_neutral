@@ -43,7 +43,14 @@
 
     <div class="flex items-center space-x-4">
       <%= f.submit hedge.new_record? ? "Create Hedge" : "Update Hedge", class: "bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-lg text-sm font-medium transition cursor-pointer" %>
-      <%= link_to "Cancel", hedges_path, class: "text-gray-400 hover:text-white text-sm font-medium transition" %>
+      <% cancel_path = if hedge.persisted?
+                          hedge_path(hedge)
+                        elsif @selected_position
+                          position_path(@selected_position)
+                        else
+                          positions_path
+                        end %>
+      <%= link_to "Cancel", cancel_path, class: "text-gray-400 hover:text-white text-sm font-medium transition" %>
     </div>
   <% end %>
 </div>

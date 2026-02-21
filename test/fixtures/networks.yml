@@ -5,3 +5,7 @@ ethereum:
 arbitrum:
   name: arbitrum
   chain_id: 42161
+
+base:
+  name: base
+  chain_id: 8453

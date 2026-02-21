@@ -15,6 +15,7 @@ class HedgeLifecycleTest < ActionDispatch::IntegrationTest
     mock_service.define_singleton_method(:get_position) { |_| nil }
     mock_service.define_singleton_method(:sz_decimals) { |_| 6 }
     mock_service.define_singleton_method(:close_short) { |**_| nil }
+    mock_service.define_singleton_method(:user_fills) { |**_| [] }
 
     HyperliquidService.stub(:new, mock_service) do
       # Create hedge
@@ -42,7 +43,7 @@ class HedgeLifecycleTest < ActionDispatch::IntegrationTest
       assert_difference "Hedge.count", -1 do
         delete hedge_path(hedge)
       end
-      assert_redirected_to hedges_path
+      assert_redirected_to position_path(position)
     end
   end
 end

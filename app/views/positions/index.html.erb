@@ -10,7 +10,6 @@
         <th class="text-right text-gray-400 text-xs uppercase tracking-wide p-4">Asset1 Amount</th>
         <th class="text-right text-gray-400 text-xs uppercase tracking-wide p-4">Value</th>
         <th class="text-center text-gray-400 text-xs uppercase tracking-wide p-4">Hedged</th>
-        <th class="text-right text-gray-400 text-xs uppercase tracking-wide p-4">Actions</th>
       </tr>
     </thead>
     <tbody>
@@ -34,14 +33,11 @@
               <span class="text-gray-500">-</span>
             <% end %>
           </td>
-          <td class="p-4 text-right">
-            <%= button_to "Sync", sync_now_position_path(position), method: :post, class: "text-blue-400 hover:text-blue-300 text-sm font-medium" %>
-          </td>
         </tr>
       <% end %>
       <% if @positions.empty? %>
         <tr>
-          <td colspan="7" class="p-8 text-center text-gray-500">No active positions found.</td>
+          <td colspan="6" class="p-8 text-center text-gray-500">No active positions found.</td>
         </tr>
       <% end %>
     </tbody>

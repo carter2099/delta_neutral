@@ -475,6 +475,7 @@ DEPENDENCIES
   capybara
   debug
   dotenv-rails
+  eth
   hyperliquid
   image_processing (~> 1.2)
   importmap-rails

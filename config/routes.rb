@@ -14,7 +14,7 @@ Rails.application.routes.draw do
 
   resource :settings, only: [ :edit, :update ]
 
-  resources :hedges do
+  resources :hedges, except: [ :index ] do
     post :sync_now, on: :member
   end
 

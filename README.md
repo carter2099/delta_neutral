@@ -19,6 +19,7 @@ Each asset in a pair is hedged independently, allowing for asymmetric movements.
 
 - **Automated Rebalancing** - Background jobs check positions every 5 minutes and rebalance shorts when deviation exceeds tolerance
 - **Per-Asset Independence** - The two assets in a position are hedged separately
+- **Subaccount Isolation** - When multiple hedges share the same asset, Hyperliquid subaccounts provide per-hedge isolation (max 10 subaccounts = up to 12 positions sharing the same hedged asset)
 - **PnL Tracking** - Realized and unrealized P&L captured from Hyperliquid fill data
 - **Email Notifications** - Sent on every hedge rebalance with before/after short sizes
 - **Failed Rebalance Visibility** - Failed rebalances are recorded with error details and shown in the UI; consecutive failures (3 within 24h) trigger a circuit breaker to stop retrying

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_21_200000) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_21_210000) do
   create_table "dexes", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name", null: false
@@ -20,6 +20,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_21_200000) do
 
   create_table "hedges", force: :cascade do |t|
     t.boolean "active", default: true, null: false
+    t.string "asset0_hl_account"
+    t.string "asset1_hl_account"
     t.datetime "created_at", null: false
     t.integer "position_id", null: false
     t.decimal "target", precision: 5, scale: 4, null: false

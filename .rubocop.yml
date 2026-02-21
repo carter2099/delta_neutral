@@ -1,6 +1,10 @@
 # Omakase Ruby styling for Rails
 inherit_gem: { rubocop-rails-omakase: rubocop.yml }
 
+AllCops:
+  Exclude:
+    - ".ruby-lsp/**/*"
+
 # Rails-generated schema files — not worth linting
 Layout/SpaceInsideArrayLiteralBrackets:
   Exclude:

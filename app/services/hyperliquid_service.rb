@@ -47,10 +47,13 @@ class HyperliquidService
   #
   # @param asset [String] the coin symbol (e.g. +"ETH"+)
   # @param size [BigDecimal] position size in base units
+  # @param vault_address [String, nil] subaccount address to trade on; +nil+ for main account
   # @return [Hash] the SDK response from the exchange
-  def open_short(asset:, size:)
-    Rails.logger.debug { "[HyperliquidService] open_short: asset=#{asset}, size=#{size}" }
-    result = sdk.exchange.market_order(coin: asset, is_buy: false, size: size)
+  def open_short(asset:, size:, vault_address: nil)
+    Rails.logger.debug { "[HyperliquidService] open_short: asset=#{asset}, size=#{size}, vault_address=#{vault_address}" }
+    opts = { coin: asset, is_buy: false, size: size }
+    opts[:vault_address] = vault_address if vault_address
+    result = sdk.exchange.market_order(**opts)
     Rails.logger.debug { "[HyperliquidService] open_short result: #{result.inspect.truncate(200)}" }
     validate_order_response!(result)
     result
@@ -62,10 +65,13 @@ class HyperliquidService
   #
   # @param asset [String] the coin symbol (e.g. +"ETH"+)
   # @param size [BigDecimal, nil] amount to close; +nil+ closes the full position
+  # @param vault_address [String, nil] subaccount address to trade on; +nil+ for main account
   # @return [Hash, nil] the SDK response, or +nil+ if no position was open
-  def close_short(asset:, size: nil)
-    Rails.logger.debug { "[HyperliquidService] close_short: asset=#{asset}, size=#{size || 'full'}" }
-    result = sdk.exchange.market_close(coin: asset, size: size)
+  def close_short(asset:, size: nil, vault_address: nil)
+    Rails.logger.debug { "[HyperliquidService] close_short: asset=#{asset}, size=#{size || 'full'}, vault_address=#{vault_address}" }
+    opts = { coin: asset, size: size }
+    opts[:vault_address] = vault_address if vault_address
+    result = sdk.exchange.market_close(**opts)
     Rails.logger.debug { "[HyperliquidService] close_short result: #{result.inspect.truncate(200)}" }
     result
   rescue ArgumentError => e
@@ -75,13 +81,15 @@ class HyperliquidService
     nil
   end
 
-  # Returns all open perpetual positions for the configured wallet.
+  # Returns all open perpetual positions for the given address.
   #
+  # @param address [String, nil] wallet/subaccount address; defaults to the main wallet
   # @return [Array<Hash>] each hash includes +:asset+, +:size+,
   #   +:entry_price+, +:unrealized_pnl+, and +:liquidation_price+
-  def get_positions
-    Rails.logger.debug { "[HyperliquidService] get_positions for #{@wallet_address}" }
-    state = sdk.info.user_state(@wallet_address)
+  def get_positions(address: nil)
+    addr = address || @wallet_address
+    Rails.logger.debug { "[HyperliquidService] get_positions for #{addr}" }
+    state = sdk.info.user_state(addr)
     positions = (state["assetPositions"] || []).map do |ap|
       pos = ap["position"]
       size = BigDecimal(pos["szi"])
@@ -104,20 +112,12 @@ class HyperliquidService
   # Returns the open position for a specific asset, or +nil+ if none exists.
   #
   # @param asset [String] the coin symbol
+  # @param address [String, nil] wallet/subaccount address; defaults to the main wallet
   # @return [Hash, nil] position hash (see {#get_positions}) or +nil+
-  def get_position(asset)
-    pos = get_positions.find { |p| p[:asset] == asset }
+  def get_position(asset, address: nil)
+    pos = get_positions(address: address).find { |p| p[:asset] == asset }
     Rails.logger.debug { "[HyperliquidService] get_position(#{asset}): #{pos ? "size=#{pos[:size]}, unrealized_pnl=#{pos[:unrealized_pnl]}" : "not found"}" }
     pos
-  end
-
-  # Returns the unrealized P&L for a specific asset position.
-  #
-  # @param asset [String] the coin symbol
-  # @return [BigDecimal] unrealized P&L, or +0+ if no position is open
-  def unrealized_pnl(asset)
-    pos = get_position(asset)
-    pos ? pos[:unrealized_pnl] : BigDecimal("0")
   end
 
   # Returns the size decimal precision for a given asset.
@@ -138,13 +138,15 @@ class HyperliquidService
     end
   end
 
-  # Returns all fills for the wallet since the given timestamp.
+  # Returns all fills for the given address since the given timestamp.
   #
   # @param start_time [Time] only return fills at or after this time
+  # @param address [String, nil] wallet/subaccount address; defaults to the main wallet
   # @return [Array<Hash>] raw fill objects from the Hyperliquid API
-  def user_fills(start_time:)
-    Rails.logger.debug { "[HyperliquidService] user_fills since #{start_time}" }
-    fills = sdk.info.user_fills_by_time(@wallet_address, start_time.to_i * 1000)
+  def user_fills(start_time:, address: nil)
+    addr = address || @wallet_address
+    Rails.logger.debug { "[HyperliquidService] user_fills since #{start_time} for #{addr}" }
+    fills = sdk.info.user_fills_by_time(addr, start_time.to_i * 1000)
     Rails.logger.debug { "[HyperliquidService] user_fills returned #{fills.size} fill(s)" }
     fills
   end
@@ -154,12 +156,74 @@ class HyperliquidService
   # @param asset [String] the coin symbol (e.g. +"ETH"+)
   # @param leverage [Integer] desired leverage multiplier
   # @param is_cross [Boolean] +true+ for cross margin, +false+ for isolated
+  # @param vault_address [String, nil] subaccount address; +nil+ for main account
   # @return [Hash] the SDK response
-  def set_leverage(asset:, leverage:, is_cross:)
-    Rails.logger.debug { "[HyperliquidService] set_leverage: asset=#{asset}, leverage=#{leverage}, is_cross=#{is_cross}" }
-    result = sdk.exchange.update_leverage(coin: asset, leverage: leverage, is_cross: is_cross)
+  def set_leverage(asset:, leverage:, is_cross:, vault_address: nil)
+    Rails.logger.debug { "[HyperliquidService] set_leverage: asset=#{asset}, leverage=#{leverage}, is_cross=#{is_cross}, vault_address=#{vault_address}" }
+    opts = { coin: asset, leverage: leverage, is_cross: is_cross }
+    opts[:vault_address] = vault_address if vault_address
+    result = sdk.exchange.update_leverage(**opts)
     Rails.logger.debug { "[HyperliquidService] set_leverage result: #{result.inspect.truncate(200)}" }
     result
+  end
+
+  # Creates a new Hyperliquid subaccount.
+  #
+  # @param name [String] the subaccount name
+  # @return [Hash] the SDK response containing the subaccount address
+  def create_subaccount(name:)
+    Rails.logger.debug { "[HyperliquidService] create_subaccount: name=#{name}" }
+    result = sdk.exchange.create_sub_account(name: name)
+    Rails.logger.debug { "[HyperliquidService] create_subaccount result: #{result.inspect.truncate(200)}" }
+    result
+  end
+
+  # Transfers USDC from main account to a subaccount.
+  #
+  # @param subaccount_address [String] the subaccount address
+  # @param usd [BigDecimal] amount of USDC to transfer
+  # @return [Hash] the SDK response
+  def transfer_to_subaccount(subaccount_address:, usd:)
+    Rails.logger.debug { "[HyperliquidService] transfer_to_subaccount: #{usd} USDC → #{subaccount_address}" }
+    result = sdk.exchange.sub_account_transfer(sub_account_user: subaccount_address, is_deposit: true, usd: usd)
+    Rails.logger.debug { "[HyperliquidService] transfer_to_subaccount result: #{result.inspect.truncate(200)}" }
+    result
+  end
+
+  # Withdraws USDC from a subaccount back to the main account.
+  #
+  # @param subaccount_address [String] the subaccount address
+  # @param usd [BigDecimal] amount of USDC to withdraw
+  # @return [Hash] the SDK response
+  def withdraw_from_subaccount(subaccount_address:, usd:)
+    Rails.logger.debug { "[HyperliquidService] withdraw_from_subaccount: #{usd} USDC ← #{subaccount_address}" }
+    result = sdk.exchange.sub_account_transfer(sub_account_user: subaccount_address, is_deposit: false, usd: usd)
+    Rails.logger.debug { "[HyperliquidService] withdraw_from_subaccount result: #{result.inspect.truncate(200)}" }
+    result
+  end
+
+  # Returns all subaccounts for the main wallet.
+  #
+  # @return [Array<Hash>] subaccount objects with +"subAccountUser"+ addresses
+  def list_subaccounts
+    Rails.logger.debug { "[HyperliquidService] list_subaccounts for #{@wallet_address}" }
+    result = sdk.info.user_subaccounts(@wallet_address)
+    Rails.logger.debug { "[HyperliquidService] list_subaccounts returned #{result.size} subaccount(s)" }
+    result
+  end
+
+  # Returns the account balance for a given address.
+  #
+  # @param address [String] wallet or subaccount address
+  # @return [Hash] with +:withdrawable+ and +:account_value+ as BigDecimals
+  def account_balance(address)
+    Rails.logger.debug { "[HyperliquidService] account_balance for #{address}" }
+    state = sdk.info.user_state(address)
+    margin = state["marginSummary"] || {}
+    {
+      withdrawable: BigDecimal(margin["totalRawUsd"] || margin["accountValue"] || "0"),
+      account_value: BigDecimal(margin["accountValue"] || "0")
+    }
   end
 
   private

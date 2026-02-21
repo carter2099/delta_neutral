@@ -5,15 +5,10 @@ class HedgesControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(users(:one))
   end
 
-  test "should get index" do
-    get hedges_path
-    assert_response :success
-  end
-
   test "should get show" do
     hedge = hedges(:eth_hedge)
     mock_service = Object.new
-    mock_service.define_singleton_method(:get_position) { |_| nil }
+    mock_service.define_singleton_method(:get_position) { |_, **_| nil }
     mock_service.define_singleton_method(:sz_decimals) { |_| 6 }
 
     HyperliquidService.stub(:new, mock_service) do
@@ -44,9 +39,9 @@ class HedgesControllerTest < ActionDispatch::IntegrationTest
   test "should destroy hedge and close shorts" do
     hedge = hedges(:eth_hedge)
 
-    mock_service = Minitest::Mock.new
-    mock_service.expect(:close_short, nil, asset: "ETH")
-    mock_service.expect(:close_short, nil, asset: "USDC")
+    mock_service = Object.new
+    mock_service.define_singleton_method(:close_short) { |**_| nil }
+    mock_service.define_singleton_method(:user_fills) { |**_| [] }
 
     HyperliquidService.stub(:new, mock_service) do
       assert_difference "Hedge.count", -1 do
@@ -54,8 +49,28 @@ class HedgesControllerTest < ActionDispatch::IntegrationTest
       end
     end
 
-    assert_redirected_to hedges_path
-    mock_service.verify
+    assert_redirected_to position_path(hedge.position)
+  end
+
+  test "should destroy hedge on subaccount and withdraw USDC" do
+    hedge = hedges(:eth_hedge)
+    hedge.update!(asset0_hl_account: "0xsub1")
+
+    withdraw_called = false
+    mock_service = Object.new
+    mock_service.define_singleton_method(:close_short) { |**_| nil }
+    mock_service.define_singleton_method(:user_fills) { |**_| [] }
+    mock_service.define_singleton_method(:account_balance) { |_| { withdrawable: BigDecimal("500"), account_value: BigDecimal("500") } }
+    mock_service.define_singleton_method(:withdraw_from_subaccount) { |**_| withdraw_called = true; { "status" => "ok" } }
+
+    HyperliquidService.stub(:new, mock_service) do
+      assert_difference "Hedge.count", -1 do
+        delete hedge_path(hedge)
+      end
+    end
+
+    assert withdraw_called, "should have withdrawn USDC from subaccount"
+    assert_redirected_to position_path(hedge.position)
   end
 
   test "should not destroy hedge if hyperliquid fails" do

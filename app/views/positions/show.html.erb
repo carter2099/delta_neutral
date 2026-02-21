@@ -8,7 +8,15 @@
         </svg>
       <% end %>
     </h1>
-    <p class="text-gray-400 mt-1"><%= @position.dex.name.capitalize %> &middot; <%= truncate(@position.pool_address.to_s, length: 20) %></p>
+    <p class="text-gray-400 mt-1 flex items-center gap-2">
+      <%= @position.dex.name.capitalize %> &middot;
+      <span id="copy-address" class="cursor-pointer hover:text-white transition inline-flex items-center gap-1" title="<%= @position.pool_address %>" onclick="navigator.clipboard.writeText('<%= @position.pool_address %>'); var icon=this.querySelector('.copy-icon'); icon.innerHTML='<path stroke-linecap=\'round\' stroke-linejoin=\'round\' d=\'M4.5 12.75l6 6 9-13.5\' />'; icon.classList.add('text-green-400'); setTimeout(function(){ icon.innerHTML='<path stroke-linecap=\'round\' stroke-linejoin=\'round\' d=\'M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75\' />'; icon.classList.remove('text-green-400'); }, 1500)">
+        <%= @position.pool_address.to_s[0..5] %>&hellip;<%= @position.pool_address.to_s[-4..] %>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 copy-icon">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m12 6.625v-1.875a3.375 3.375 0 0 0-3.375-3.375h-1.5a1.125 1.125 0 0 1-1.125-1.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H9.75" />
+        </svg>
+      </span>
+    </p>
   </div>
   <div class="flex items-center space-x-3">
     <%= button_to "Sync Now", sync_now_position_path(@position), method: :post, class: "bg-gray-700 hover:bg-gray-600 text-gray-300 px-4 py-2 rounded-lg text-sm font-medium transition" %>
@@ -24,7 +32,9 @@
 <% latest_snap = @pnl_snapshots.first %>
 <% hedge_unrealized = latest_snap&.hedge_unrealized.to_d %>
 <% hedge_realized = latest_snap&.hedge_realized.to_d %>
-<% total_pnl = pool_unrealized ? pool_unrealized + hedge_unrealized : hedge_unrealized %>
+<% total_unrealized = pool_unrealized ? pool_unrealized + hedge_unrealized : hedge_unrealized %>
+<% total_fees = latest_snap&.total_fees_usd || 0 %>
+<% total_pnl = total_unrealized + hedge_realized + total_fees %>
 
 <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
   <div class="bg-gray-900 rounded-xl border border-gray-800 p-4 space-y-2">
@@ -60,70 +70,58 @@
   </div>
 </div>
 
-<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-  <div>
-    <h2 class="text-xl font-semibold text-white mb-4">PnL Summary</h2>
-    <div class="grid grid-cols-2 gap-4">
-      <div class="bg-gray-900 rounded-xl border border-gray-800 p-5">
-        <p class="text-gray-400 text-xs uppercase tracking-wide">Total Unrealized</p>
-        <p class="text-2xl font-bold mt-2 <%= total_pnl >= 0 ? 'text-green-400' : 'text-red-400' %>">
-          $<%= number_with_precision(total_pnl, precision: 2) %>
-        </p>
-        <p class="text-gray-500 text-sm mt-1">
-          Pool: <span class="<%= (pool_unrealized || 0) >= 0 ? 'text-green-400' : 'text-red-400' %>">$<%= number_with_precision(pool_unrealized || 0, precision: 2) %></span>
-          &middot; Hedge: <span class="<%= hedge_unrealized >= 0 ? 'text-green-400' : 'text-red-400' %>">$<%= number_with_precision(hedge_unrealized, precision: 2) %></span>
-        </p>
-      </div>
-      <div class="bg-gray-900 rounded-xl border border-gray-800 p-5">
-        <p class="text-gray-400 text-xs uppercase tracking-wide">Realized PnL</p>
-        <p class="text-2xl font-bold mt-2 <%= hedge_realized >= 0 ? 'text-green-400' : 'text-red-400' %>">
-          $<%= number_with_precision(hedge_realized, precision: 2) %>
-        </p>
-      </div>
-    </div>
-    <% if latest_snap %>
-      <p class="text-gray-600 text-xs mt-3">As of <%= latest_snap.captured_at.strftime("%m/%d/%Y %H:%M") %></p>
-    <% end %>
+<h2 class="text-xl font-semibold text-white mb-4">PnL Summary</h2>
+<div class="grid grid-cols-3 gap-4 mb-6">
+  <div class="bg-gray-900 rounded-xl border border-gray-800 p-5">
+    <p class="text-gray-400 text-xs uppercase tracking-wide">Total PnL</p>
+    <p class="text-2xl font-bold mt-2 <%= total_pnl >= 0 ? 'text-green-400' : 'text-red-400' %>">
+      $<%= number_with_precision(total_pnl, precision: 2) %>
+    </p>
+    <p class="text-gray-500 text-sm mt-1">
+      Unrealized: <span class="<%= total_unrealized >= 0 ? 'text-green-400' : 'text-red-400' %>">$<%= number_with_precision(total_unrealized, precision: 2) %></span>
+      &middot; Realized: <span class="<%= hedge_realized >= 0 ? 'text-green-400' : 'text-red-400' %>">$<%= number_with_precision(hedge_realized, precision: 2) %></span>
+      &middot; Fees: <span class="text-green-400">$<%= number_with_precision(total_fees, precision: 2) %></span>
+    </p>
   </div>
+  <div class="bg-gray-900 rounded-xl border border-gray-800 p-5">
+    <p class="text-gray-400 text-xs uppercase tracking-wide">Total Unrealized</p>
+    <p class="text-2xl font-bold mt-2 <%= total_unrealized >= 0 ? 'text-green-400' : 'text-red-400' %>">
+      $<%= number_with_precision(total_unrealized, precision: 2) %>
+    </p>
+    <p class="text-gray-500 text-sm mt-1">
+      Pool: <span class="<%= (pool_unrealized || 0) >= 0 ? 'text-green-400' : 'text-red-400' %>">$<%= number_with_precision(pool_unrealized || 0, precision: 2) %></span>
+      &middot; Hedge: <span class="<%= hedge_unrealized >= 0 ? 'text-green-400' : 'text-red-400' %>">$<%= number_with_precision(hedge_unrealized, precision: 2) %></span>
+    </p>
+  </div>
+  <div class="bg-gray-900 rounded-xl border border-gray-800 p-5">
+    <p class="text-gray-400 text-xs uppercase tracking-wide">Realized PnL</p>
+    <p class="text-2xl font-bold mt-2 <%= hedge_realized >= 0 ? 'text-green-400' : 'text-red-400' %>">
+      $<%= number_with_precision(hedge_realized, precision: 2) %>
+    </p>
+  </div>
+</div>
+<% if latest_snap %>
+  <p class="text-gray-600 text-xs mb-8">As of <%= latest_snap.captured_at.strftime("%m/%d/%Y %H:%M") %></p>
+<% end %>
 
-  <div>
-    <h2 class="text-xl font-semibold text-white mb-4">Rebalance History</h2>
-    <div class="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
-      <table class="w-full">
-        <thead>
-          <tr class="border-b border-gray-800">
-            <th class="text-left text-gray-400 text-xs uppercase tracking-wide p-4">Asset</th>
-            <th class="text-center text-gray-400 text-xs uppercase tracking-wide p-4"></th>
-            <th class="text-right text-gray-400 text-xs uppercase tracking-wide p-4">Old &rarr; New</th>
-            <th class="text-right text-gray-400 text-xs uppercase tracking-wide p-4">PnL</th>
-            <th class="text-right text-gray-400 text-xs uppercase tracking-wide p-4">Time</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% @rebalances.each do |r| %>
-            <tr class="border-b border-gray-800/50">
-              <td class="p-4 text-white font-medium"><%= r.asset %></td>
-              <td class="p-4 text-center">
-                <% if r.status == ShortRebalance::STATUS_FAILED %>
-                  <span class="inline-block w-2 h-2 rounded-full bg-red-500" title="Failed: <%= r.message %>"></span>
-                <% else %>
-                  <span class="inline-block w-2 h-2 rounded-full bg-green-500"></span>
-                <% end %>
-              </td>
-              <td class="p-4 text-right text-gray-300">
-                <%= number_with_precision(r.old_short_size, precision: 4) %> &rarr; <%= number_with_precision(r.new_short_size, precision: 4) %>
-              </td>
-              <td class="p-4 text-right <%= r.realized_pnl.to_d >= 0 ? 'text-green-400' : 'text-red-400' %>">
-                $<%= number_with_precision(r.realized_pnl, precision: 2) %>
-              </td>
-              <td class="p-4 text-right text-gray-400 text-sm"><%= time_ago_in_words(r.rebalanced_at) %> ago</td>
-            </tr>
-          <% end %>
-          <% if @rebalances.empty? %>
-            <tr><td colspan="5" class="p-8 text-center text-gray-500">No rebalances yet.</td></tr>
-          <% end %>
-        </tbody>
-      </table>
-    </div>
+<h2 class="text-xl font-semibold text-white mb-4">LP Fees</h2>
+<div class="grid grid-cols-3 gap-4">
+  <div class="bg-gray-900 rounded-xl border border-gray-800 p-5">
+    <p class="text-gray-400 text-xs uppercase tracking-wide">Collected</p>
+    <p class="text-2xl font-bold mt-2 text-green-400">
+      $<%= number_with_precision(latest_snap&.collected_fees_usd || 0, precision: 2) %>
+    </p>
+  </div>
+  <div class="bg-gray-900 rounded-xl border border-gray-800 p-5">
+    <p class="text-gray-400 text-xs uppercase tracking-wide">Uncollected</p>
+    <p class="text-2xl font-bold mt-2 text-green-400">
+      $<%= number_with_precision(latest_snap&.uncollected_fees_usd || 0, precision: 2) %>
+    </p>
+  </div>
+  <div class="bg-gray-900 rounded-xl border border-gray-800 p-5">
+    <p class="text-gray-400 text-xs uppercase tracking-wide">Total Fees</p>
+    <p class="text-2xl font-bold mt-2 text-green-400">
+      $<%= number_with_precision(latest_snap&.total_fees_usd || 0, precision: 2) %>
+    </p>
   </div>
 </div>

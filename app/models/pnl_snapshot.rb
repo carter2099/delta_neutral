@@ -7,13 +7,20 @@
 class PnlSnapshot < ApplicationRecord
   belongs_to :position
 
-  # Calculates the total USD value of both assets recorded in this snapshot.
-  #
-  # Treats +nil+ amounts or prices as zero.
-  #
-  # @return [BigDecimal] the sum of (asset0_amount * asset0_price_usd) and
-  #   (asset1_amount * asset1_price_usd)
-  def total_value_usd
-    ((asset0_amount || 0) * (asset0_price_usd || 0)) + ((asset1_amount || 0) * (asset1_price_usd || 0))
+  # @return [BigDecimal] total collected + uncollected fees in USD
+  def total_fees_usd
+    collected_fees_usd + uncollected_fees_usd
+  end
+
+  # @return [BigDecimal] cumulative collected fees in USD
+  def collected_fees_usd
+    ((collected_fees0 || 0) * (asset0_price_usd || 0)) +
+      ((collected_fees1 || 0) * (asset1_price_usd || 0))
+  end
+
+  # @return [BigDecimal] pending uncollected fees in USD
+  def uncollected_fees_usd
+    ((uncollected_fees0 || 0) * (asset0_price_usd || 0)) +
+      ((uncollected_fees1 || 0) * (asset1_price_usd || 0))
   end
 end

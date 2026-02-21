@@ -24,8 +24,10 @@ class PositionSyncJob < ApplicationJob
 
     Rails.logger.debug { "[PositionSyncJob] found #{positions.count} position(s) to sync" }
 
-    positions.includes(:hedge).find_each do |position|
-      sync_position(position, uniswap, hyperliquid)
+    positions.includes(:hedge, wallet: :network).find_each do |position|
+      network_name = position.wallet.network.name
+      ethereum = EthereumService.new(network: network_name)
+      sync_position(position, uniswap, hyperliquid, ethereum)
     rescue => e
       Rails.logger.error("PositionSyncJob failed for position #{position.id}: #{e.message}")
     end
@@ -43,8 +45,9 @@ class PositionSyncJob < ApplicationJob
   # @param position [Position] the position to sync
   # @param uniswap [UniswapService] configured Uniswap subgraph client
   # @param hyperliquid [HyperliquidService] configured Hyperliquid client
+  # @param ethereum [EthereumService] configured Ethereum RPC client
   # @return [void]
-  def sync_position(position, uniswap, hyperliquid)
+  def sync_position(position, uniswap, hyperliquid, ethereum)
     Rails.logger.debug { "[PositionSyncJob] syncing position #{position.id} (#{position.asset0}/#{position.asset1}, pool=#{position.pool_address})" }
     pool_data = uniswap.fetch_pool_data(position.pool_address)
     unless pool_data
@@ -70,26 +73,54 @@ class PositionSyncJob < ApplicationJob
     hedge_realized = BigDecimal("0")
 
     if position.hedge&.active?
-      Rails.logger.debug { "[PositionSyncJob] position #{position.id} has active hedge #{position.hedge.id}, fetching Hyperliquid positions" }
-      all_positions = hyperliquid.get_positions
-      [ position.asset0, position.asset1 ].each do |asset|
+      hedge = position.hedge
+      Rails.logger.debug { "[PositionSyncJob] position #{position.id} has active hedge #{hedge.id}, fetching Hyperliquid positions" }
+
+      [ [ position.asset0, 0 ], [ position.asset1, 1 ] ].each do |asset, asset_index|
         hl_asset = HyperliquidService.normalize_symbol(asset)
-        pos = all_positions.find { |p| p[:asset] == hl_asset }
+        account_address = hedge.hl_account_for(asset_index)
+        pos = hyperliquid.get_position(hl_asset, address: account_address)
         if pos
-          Rails.logger.debug { "[PositionSyncJob] hedge PnL for #{asset}: unrealized=#{pos[:unrealized_pnl]}" }
+          Rails.logger.debug { "[PositionSyncJob] hedge PnL for #{asset} (account=#{account_address || 'main'}): unrealized=#{pos[:unrealized_pnl]}" }
           hedge_unrealized += pos[:unrealized_pnl]
         else
           Rails.logger.debug { "[PositionSyncJob] no Hyperliquid position found for #{asset}" }
         end
       end
 
-      hedge_realized = position.hedge.short_rebalances.sum(:realized_pnl)
+      hedge_realized = hedge.short_rebalances.sum(:realized_pnl)
       Rails.logger.debug { "[PositionSyncJob] position #{position.id} hedge totals: unrealized=#{hedge_unrealized}, realized=#{hedge_realized}" }
     else
       Rails.logger.debug { "[PositionSyncJob] position #{position.id} has no active hedge" }
     end
 
     pool_unrealized = position.entry_value_usd ? position.total_value_usd - position.entry_value_usd : BigDecimal("0")
+
+    uncollected = ethereum.fetch_uncollected_fees(
+      position.external_id,
+      token0_decimals: pool_data[:token0_decimals],
+      token1_decimals: pool_data[:token1_decimals]
+    )
+
+    # Subgraph cumulative collected (reliable once indexed)
+    subgraph = uniswap.fetch_position_fees(position.external_id)
+
+    # Diff-based collected (detects collections in real-time before subgraph indexes)
+    prev_snap = position.pnl_snapshots.order(captured_at: :desc).first
+    diff_collected0 = prev_snap&.collected_fees0 || BigDecimal("0")
+    diff_collected1 = prev_snap&.collected_fees1 || BigDecimal("0")
+    if prev_snap
+      drop0 = (prev_snap.uncollected_fees0 || 0) - uncollected[:uncollected_fees0]
+      drop1 = (prev_snap.uncollected_fees1 || 0) - uncollected[:uncollected_fees1]
+      diff_collected0 += drop0 if drop0 > 0
+      diff_collected1 += drop1 if drop1 > 0
+    end
+
+    # Use whichever source reports higher (subgraph may lag, diff may have state gaps)
+    collected0 = [ subgraph[:collected_fees0], diff_collected0 ].max
+    collected1 = [ subgraph[:collected_fees1], diff_collected1 ].max
+
+    Rails.logger.debug { "[PositionSyncJob] position #{position.id} fees: collected0=#{collected0}, collected1=#{collected1}, uncollected=#{uncollected.inspect}" }
 
     PnlSnapshot.create!(
       position: position,
@@ -100,7 +131,11 @@ class PositionSyncJob < ApplicationJob
       asset1_price_usd: position.asset1_price_usd,
       hedge_unrealized: hedge_unrealized,
       hedge_realized: hedge_realized,
-      pool_unrealized: pool_unrealized
+      pool_unrealized: pool_unrealized,
+      collected_fees0: collected0,
+      collected_fees1: collected1,
+      uncollected_fees0: uncollected[:uncollected_fees0],
+      uncollected_fees1: uncollected[:uncollected_fees1]
     )
     Rails.logger.debug { "[PositionSyncJob] position #{position.id} PnlSnapshot created" }
   end

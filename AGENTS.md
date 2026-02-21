@@ -21,24 +21,25 @@ Delta Neutral is a single-user, self-hosted auto hedge rebalancer. It monitors U
 User
 ├── Wallet (address, network)
 │   └── Position (asset pair, amounts, prices, external_id)
-│       ├── Hedge (target%, tolerance%, active)
+│       ├── Hedge (target%, tolerance%, active, asset0_hl_account, asset1_hl_account)
 │       │   └── ShortRebalance (old/new short size, realized PnL, status, message)
-│       └── PnlSnapshot (captured amounts, prices, hedge PnL)
+│       └── PnlSnapshot (captured amounts, prices, hedge PnL, collected/uncollected fees)
 ├── Network (lookup: ethereum, arbitrum, base, optimism, polygon)
 └── Dex (lookup: uniswap, hyperliquid)
 ```
 
 ### Service Layer
 
-- **UniswapService** — GraphQL queries to The Graph's decentralized subgraph for Uniswap V3 position data, token prices (via derivedETH * ethPriceUSD), and pool state
-- **HyperliquidService** — Wrapper around the `hyperliquid` gem SDK for opening/closing shorts, fetching positions, and PnL data
+- **UniswapService** — GraphQL queries to The Graph's decentralized subgraph for Uniswap V3 position data, token prices (via derivedETH * ethPriceUSD), pool state, and collected fee data per position
+- **HyperliquidService** — Wrapper around the `hyperliquid` gem SDK for opening/closing shorts, fetching positions, PnL data, and managing subaccounts for per-hedge isolation
+- **EthereumService** — JSON-RPC client (via `eth` gem) for on-chain reads; fetches uncollected LP fees by static-calling `NonfungiblePositionManager.collect()` with MAX_UINT128 amounts
 
 ### Background Jobs (Solid Queue)
 
 | Job | Schedule | Purpose |
 |-----|----------|---------|
 | WalletSyncJob | Every 1 min | Discover/deactivate Uniswap positions per wallet |
-| PositionSyncJob | Every 1 min | Update prices, create PnL snapshots |
+| PositionSyncJob | Every 1 min | Update prices, fetch collected + uncollected LP fees, create PnL snapshots |
 | HedgeSyncJob | Every 5 min | Check tolerances, rebalance shorts, send email notifications |
 
 ### Key Business Logic
@@ -56,6 +57,14 @@ end
 **Failed rebalance tracking:** Every rebalance attempt is recorded as a `ShortRebalance` with `status: "success"` or `status: "failed"`. Failed records include a `message` with the attempted order size and error details (e.g., Hyperliquid's $10 minimum order rejection). The UI shows failed rebalances with a clickable red badge that expands to reveal the error message.
 
 **Consecutive failure circuit breaker:** If the last 3 rebalances for a given hedge+asset (within 24 hours) all failed, `HedgeSyncJob` skips further attempts for that asset. This prevents polluting the rebalance history with repeated identical failures (e.g., an order that's permanently below the $10 minimum). The circuit breaker resets naturally when a rebalance succeeds, when failures age past 24 hours, or when the user adjusts hedge settings.
+
+**Hyperliquid subaccount isolation:** When two hedges share the same HL asset (e.g., two ETH/USDC pools), their shorts would collide on the same account. Each hedge stores per-asset account assignments in `asset0_hl_account` and `asset1_hl_account` (`nil` = main account). The allocation algorithm:
+
+1. If the main account is free for this asset (no other active hedge uses it), use main (leave column `nil`)
+2. If main is taken, find the first existing subaccount not in use for this asset
+3. If no subaccount is available, create a new one (Hyperliquid max: 10 subaccounts)
+
+USDC transfers: Before opening a short on a subaccount, `HedgeSyncJob` calculates the required margin (`target_short × mark_price / leverage × 1.2` buffer), checks the subaccount balance, and transfers only the difference from main. When closing to zero on a subaccount, all USDC is withdrawn back to main and the account column is cleared. The same cleanup happens when a hedge is destroyed via `HedgesController#destroy`.
 
 ### Controllers
 
@@ -82,6 +91,7 @@ All controllers require authentication (via Rails 8 generated `Authentication` c
 **Required variables** (validated at boot in development and production):
 - `HYPERLIQUID_PRIVATE_KEY`, `HYPERLIQUID_WALLET_ADDRESS`
 - `UNISWAP_SUBGRAPH_URL`, `THEGRAPH_API_KEY`
+- `ETHEREUM_RPC_URL`, `ARBITRUM_RPC_URL`, `BASE_RPC_URL` (per-network Alchemy/Infura JSON-RPC endpoints for on-chain fee reads)
 
 **If you add a new required env var:**
 1. Add it to `.env.example` with a blank or example value
@@ -127,7 +137,7 @@ app/
 ├── jobs/           # WalletSync, PositionSync, HedgeSync
 ├── mailers/        # HedgeRebalanceMailer
 ├── models/         # User, Wallet, Position, Hedge, PnlSnapshot, ShortRebalance, Network, Dex
-├── services/       # UniswapService, HyperliquidService
+├── services/       # UniswapService, HyperliquidService, EthereumService
 └── views/          # Tailwind dark-themed UI
 ```
 

@@ -3,15 +3,6 @@
 # All hedge lookups are scoped through the current user's positions to
 # prevent unauthorized access.
 class HedgesController < ApplicationController
-  # GET /hedges
-  #
-  # Lists all hedges belonging to the current user's positions.
-  #
-  # @return [void]
-  def index
-    @hedges = Hedge.joins(:position).where(positions: { user_id: Current.user.id }).includes(:position, :short_rebalances)
-  end
-
   # GET /hedges/:id
   #
   # Shows a single hedge and its rebalance history in descending order.
@@ -25,14 +16,17 @@ class HedgesController < ApplicationController
 
     begin
       hyperliquid = HyperliquidService.new
-      symbols = [ position.asset0, position.asset1 ].map { |a| HyperliquidService.normalize_symbol(a) }
-      @shorts = symbols.filter_map { |sym| hyperliquid.get_position(sym) }
+      @shorts = [ [ position.asset0, 0 ], [ position.asset1, 1 ] ].filter_map do |asset, idx|
+        hl_asset = HyperliquidService.normalize_symbol(asset)
+        account_address = @hedge.hl_account_for(idx)
+        hyperliquid.get_position(hl_asset, address: account_address)
+      end
     rescue => e
       Rails.logger.error("[HedgesController] Failed to fetch shorts for hedge #{@hedge.id}: #{e.message}")
       @shorts = []
       flash.now[:alert] = "Could not load Hyperliquid positions."
     end
-    @asset_metrics = [ [ position.asset0, position.asset0_amount ], [ position.asset1, position.asset1_amount ] ].map do |asset, pool_amount|
+    @asset_metrics = [ [ position.asset0, position.asset0_amount, 0 ], [ position.asset1, position.asset1_amount, 1 ] ].map do |asset, pool_amount, asset_index|
       hl_asset = HyperliquidService.normalize_symbol(asset)
       short_data = @shorts.find { |s| s[:asset] == hl_asset }
       current_short = short_data ? short_data[:size].abs : BigDecimal("0")
@@ -81,7 +75,6 @@ class HedgesController < ApplicationController
   def create
     @hedge = Hedge.new(hedge_params)
 
-    # Verify the position belongs to the current user
     position = Current.user.positions.find_by(id: @hedge.position_id)
     unless position
       @unhedged_positions = unhedged_positions
@@ -129,13 +122,23 @@ class HedgesController < ApplicationController
   # @return [void]
   def destroy
     @hedge = find_hedge
+    position = @hedge.position
 
     begin
       hyperliquid = HyperliquidService.new
-      position = @hedge.position
-      [ position.asset0, position.asset1 ].each do |asset|
+      before_close = Time.current
+      [ [ position.asset0, 0 ], [ position.asset1, 1 ] ].each do |asset, idx|
         hl_asset = HyperliquidService.normalize_symbol(asset)
-        hyperliquid.close_short(asset: hl_asset)
+        vault_address = @hedge.hl_account_for(idx)
+        hyperliquid.close_short(asset: hl_asset, vault_address: vault_address)
+
+        # Withdraw USDC back to main if on a subaccount
+        if vault_address
+          balance = hyperliquid.account_balance(vault_address)
+          if balance[:withdrawable] > 0
+            hyperliquid.withdraw_from_subaccount(subaccount_address: vault_address, usd: balance[:withdrawable])
+          end
+        end
       end
     rescue => e
       Rails.logger.error("[HedgesController] Failed to close shorts for hedge #{@hedge.id}: #{e.message}")
@@ -143,8 +146,22 @@ class HedgesController < ApplicationController
       return
     end
 
+    # Capture closure PnL and bake total realized into the latest snapshot
+    closure_pnl = [ [ position.asset0, 0 ], [ position.asset1, 1 ] ].sum do |asset, idx|
+      hl_asset = HyperliquidService.normalize_symbol(asset)
+      account_address = @hedge.hl_account_for(idx)
+      fetch_realized_pnl(hyperliquid, hl_asset, before_close, address: account_address)
+    end
+    historical_pnl = @hedge.short_rebalances.sum(:realized_pnl)
+    total_realized = historical_pnl + closure_pnl
+
+    latest_snap = position.pnl_snapshots.order(captured_at: :desc).first
+    if latest_snap
+      latest_snap.update!(hedge_realized: total_realized, hedge_unrealized: 0)
+    end
+
     @hedge.destroy
-    redirect_to hedges_path, notice: "Hedge removed."
+    redirect_to position_path(position), notice: "Hedge removed."
   end
 
   # POST /hedges/:id/sync_now
@@ -181,5 +198,15 @@ class HedgesController < ApplicationController
   # @return [ActiveRecord::Relation<Position>]
   def unhedged_positions
     Current.user.positions.active.left_joins(:hedge).where(hedges: { id: nil })
+  end
+
+  def fetch_realized_pnl(hyperliquid, asset, since, address: nil)
+    fills = hyperliquid.user_fills(start_time: since, address: address)
+    fills
+      .select { |f| f["coin"] == asset && f["closedPnl"].present? }
+      .sum { |f| BigDecimal(f["closedPnl"]) }
+  rescue => e
+    Rails.logger.warn("Failed to fetch realized PnL from fills for #{asset}: #{e.message}")
+    BigDecimal("0")
   end
 end

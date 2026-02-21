@@ -148,7 +148,7 @@
           <td class="p-4 text-right <%= r.realized_pnl >= 0 ? 'text-green-400' : 'text-red-400' %>">
             $<%= number_with_precision(r.realized_pnl, precision: 2) %>
           </td>
-          <td class="p-4 text-right text-gray-400 text-sm"><%= r.rebalanced_at.strftime("%Y-%m-%d %H:%M:%S") %></td>
+          <td class="p-4 text-right text-gray-400 text-sm"><%= r.rebalanced_at.strftime("%b %-d, %-l:%M%P") %></td>
         </tr>
       <% end %>
       <% if @rebalances.empty? %>

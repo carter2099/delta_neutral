@@ -43,26 +43,41 @@ class UniswapServiceTest < ActiveSupport::TestCase
     assert_equal BigDecimal("1.6"), pos[:asset0_amount]
     # deposited(4000) - withdrawn(1000) + fees(200) = 3200
     assert_equal BigDecimal("3200"), pos[:asset1_amount]
+    # collected fees returned separately
+    assert_equal BigDecimal("0.1"), pos[:collected_fees0]
+    assert_equal BigDecimal("200"), pos[:collected_fees1]
   end
 
-  test "fetch_token_prices_usd computes prices correctly" do
+  test "fetch_position_fees returns collected fees for a position" do
     response_body = {
       data: {
-        tokens: [
-          { "id" => "0xweth", "symbol" => "WETH", "derivedETH" => "1.0" },
-          { "id" => "0xusdc", "symbol" => "USDC", "derivedETH" => "0.0005" }
-        ],
-        bundle: { "ethPriceUSD" => "2000" }
+        position: {
+          "id" => "12345",
+          "collectedFeesToken0" => "0.5",
+          "collectedFeesToken1" => "1000.0"
+        }
       }
     }.to_json
 
     stub_request(:post, "https://api.thegraph.com/subgraphs/test")
       .to_return(status: 200, body: response_body, headers: { "Content-Type" => "application/json" })
 
-    prices = @service.fetch_token_prices_usd(%w[0xweth 0xusdc])
+    fees = @service.fetch_position_fees("12345")
 
-    assert_equal BigDecimal("2000"), prices["WETH"]
-    assert_equal BigDecimal("1"), prices["USDC"]
+    assert_equal BigDecimal("0.5"), fees[:collected_fees0]
+    assert_equal BigDecimal("1000"), fees[:collected_fees1]
+  end
+
+  test "fetch_position_fees returns zeros when position not found" do
+    response_body = { data: { position: nil } }.to_json
+
+    stub_request(:post, "https://api.thegraph.com/subgraphs/test")
+      .to_return(status: 200, body: response_body, headers: { "Content-Type" => "application/json" })
+
+    fees = @service.fetch_position_fees("99999")
+
+    assert_equal BigDecimal("0"), fees[:collected_fees0]
+    assert_equal BigDecimal("0"), fees[:collected_fees1]
   end
 
   test "fetch_pool_data returns pool info" do
@@ -73,8 +88,8 @@ class UniswapServiceTest < ActiveSupport::TestCase
           "token0Price" => "1",
           "token1Price" => "2000",
           "liquidity" => "5000000",
-          "token0" => { "id" => "0xweth", "symbol" => "WETH", "derivedETH" => "1.0" },
-          "token1" => { "id" => "0xusdc", "symbol" => "USDC", "derivedETH" => "0.0005" }
+          "token0" => { "id" => "0xweth", "symbol" => "WETH", "decimals" => "18", "derivedETH" => "1.0" },
+          "token1" => { "id" => "0xusdc", "symbol" => "USDC", "decimals" => "6", "derivedETH" => "0.0005" }
         },
         bundle: { "ethPriceUSD" => "2000" }
       }
@@ -85,8 +100,8 @@ class UniswapServiceTest < ActiveSupport::TestCase
 
     pool = @service.fetch_pool_data("0xpool123")
 
-    assert_equal "WETH", pool[:token0_symbol]
-    assert_equal "USDC", pool[:token1_symbol]
+    assert_equal 18, pool[:token0_decimals]
+    assert_equal 6, pool[:token1_decimals]
     assert_equal BigDecimal("2000"), pool[:token0_price_usd]
     assert_equal BigDecimal("1"), pool[:token1_price_usd]
   end

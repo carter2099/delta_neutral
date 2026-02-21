@@ -33,32 +33,18 @@ class UniswapService
     }
   GRAPHQL
 
-  TOKEN_PRICES_QUERY = <<~GRAPHQL
-    query($tokenIds: [String!]!) {
-      tokens(where: { id_in: $tokenIds }) {
-        id
-        symbol
-        derivedETH
-      }
-      bundle(id: "1") {
-        ethPriceUSD
-      }
-    }
-  GRAPHQL
-
   POOL_QUERY = <<~GRAPHQL
     query($poolId: String!) {
       pool(id: $poolId) {
         id
-        token0Price
-        token1Price
-        liquidity
         token0 {
           symbol
+          decimals
           derivedETH
         }
         token1 {
           symbol
+          decimals
           derivedETH
         }
       }
@@ -104,30 +90,41 @@ class UniswapService
         asset0: pos.dig("token0", "symbol"),
         asset1: pos.dig("token1", "symbol"),
         asset0_amount: deposited0 - withdrawn0 + fees0,
-        asset1_amount: deposited1 - withdrawn1 + fees1
+        asset1_amount: deposited1 - withdrawn1 + fees1,
+        collected_fees0: fees0,
+        collected_fees1: fees1
       }
     end
   end
 
-  # Returns USD prices for a set of token contract addresses.
-  #
-  # Prices are derived by multiplying each token's +derivedETH+ ratio by the
-  # current ETH/USD price from the Uniswap +bundle+. Results are keyed by
-  # both token contract address and token symbol for convenient lookup.
-  #
-  # @param token_ids [Array<String>] ERC-20 contract addresses
-  # @return [Hash{String => BigDecimal}] map of token address/symbol to USD price
-  def fetch_token_prices_usd(token_ids)
-    Rails.logger.debug { "[UniswapService] fetch_token_prices_usd for #{token_ids.size} token(s)" }
-    result = execute_query(TOKEN_PRICES_QUERY, { tokenIds: token_ids.map(&:downcase) })
-    eth_price_usd = BigDecimal(result.dig("data", "bundle", "ethPriceUSD"))
-    tokens = result.dig("data", "tokens") || []
+  POSITION_QUERY = <<~GRAPHQL
+    query($positionId: String!) {
+      position(id: $positionId) {
+        id
+        collectedFeesToken0
+        collectedFeesToken1
+      }
+    }
+  GRAPHQL
 
-    tokens.each_with_object({}) do |token, prices|
-      derived_eth = BigDecimal(token["derivedETH"])
-      prices[token["id"]] = derived_eth * eth_price_usd
-      prices[token["symbol"]] = derived_eth * eth_price_usd
+  # Returns cumulative collected fees for a single position.
+  #
+  # @param external_id [String] the Uniswap position NFT token ID
+  # @return [Hash] includes +:collected_fees0+ and +:collected_fees1+ as BigDecimal
+  def fetch_position_fees(external_id)
+    Rails.logger.debug { "[UniswapService] fetch_position_fees for position #{external_id}" }
+    result = execute_query(POSITION_QUERY, { positionId: external_id })
+    pos = result.dig("data", "position")
+
+    unless pos
+      Rails.logger.debug { "[UniswapService] fetch_position_fees: position #{external_id} not found" }
+      return { collected_fees0: BigDecimal("0"), collected_fees1: BigDecimal("0") }
     end
+
+    {
+      collected_fees0: BigDecimal(pos["collectedFeesToken0"]),
+      collected_fees1: BigDecimal(pos["collectedFeesToken1"])
+    }
   end
 
   # Returns current price and liquidity data for a Uniswap v3 pool.
@@ -135,8 +132,7 @@ class UniswapService
   # Returns +nil+ if the pool is not found in the subgraph.
   #
   # @param pool_address [String] the pool contract address
-  # @return [Hash, nil] includes +:token0_price+, +:token1_price+,
-  #   +:liquidity+, +:token0_symbol+, +:token1_symbol+,
+  # @return [Hash, nil] includes +:token0_decimals+, +:token1_decimals+,
   #   +:token0_price_usd+, +:token1_price_usd+; +nil+ if pool not found
   def fetch_pool_data(pool_address)
     Rails.logger.debug { "[UniswapService] fetch_pool_data for pool #{pool_address}" }
@@ -150,11 +146,8 @@ class UniswapService
     eth_price_usd = BigDecimal(result.dig("data", "bundle", "ethPriceUSD"))
 
     {
-      token0_price: BigDecimal(pool["token0Price"]),
-      token1_price: BigDecimal(pool["token1Price"]),
-      liquidity: pool["liquidity"],
-      token0_symbol: pool.dig("token0", "symbol"),
-      token1_symbol: pool.dig("token1", "symbol"),
+      token0_decimals: pool.dig("token0", "decimals").to_i,
+      token1_decimals: pool.dig("token1", "decimals").to_i,
       token0_price_usd: BigDecimal(pool.dig("token0", "derivedETH")) * eth_price_usd,
       token1_price_usd: BigDecimal(pool.dig("token1", "derivedETH")) * eth_price_usd
     }

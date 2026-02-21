@@ -9,12 +9,8 @@ class DashboardController < ApplicationController
   #
   # @return [void]
   def index
-    @positions = Current.user.positions.active.includes(:dex, :hedge)
+    @positions = Current.user.positions.active.includes(:dex, :hedge, :pnl_snapshots)
     @total_value = @positions.sum(&:total_value_usd)
     @active_hedges = @positions.count { |p| p.hedge&.active? }
-    @recent_rebalances = ShortRebalance.joins(hedge: :position)
-      .where(positions: { user_id: Current.user.id })
-      .order(rebalanced_at: :desc)
-      .limit(10)
   end
 end
