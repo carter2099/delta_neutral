@@ -112,8 +112,6 @@ class HedgeSyncJob < ApplicationJob
 
     Rails.logger.debug { "[HedgeSyncJob] hedge #{hedge.id} #{asset}: REBALANCE NEEDED" }
     realized_pnl = BigDecimal("0")
-    new_short_size = target_short
-
     begin
       # Close existing short and get realized PnL from fills
       if current_short > 0

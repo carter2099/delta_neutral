@@ -88,6 +88,16 @@ bin/rails db:seed # Seed lookup tables + dev admin user (admin@example.com / pas
 
 Tests use WebMock for HTTP stubbing and simple mock objects for SDK interactions. Service stubs are in `test/support/service_stubs.rb`.
 
+## Verification Checklist
+
+**Before finishing any task that touches code, always run:**
+
+```bash
+bin/rake          # Runs RuboCop lint AND full test suite (the default Rake task)
+```
+
+Both linting and tests must pass with zero offenses/failures. Do not consider a task complete until `bin/rake` exits cleanly.
+
 ## Versioning
 
 The app version lives in `config/version.rb` as `DeltaNeutral::VERSION`. This is the single source of truth — it's loaded via `config/application.rb` and displayed in the navbar layout. To cut a release:

@@ -48,7 +48,6 @@ class HedgesController < ApplicationController
         rebalance_proximity = divergence.abs / rebalance_threshold
       else
         divergence = BigDecimal("0")
-        rebalance_threshold = @hedge.tolerance
         rebalance_proximity = BigDecimal("0")
       end
 
