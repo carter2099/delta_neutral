@@ -21,9 +21,9 @@
     </p>
   </div>
   <div class="flex items-center space-x-3">
-    <%= button_to "Sync Now", sync_now_hedge_path(@hedge), method: :post, class: "bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition" %>
-    <%= link_to "Edit", edit_hedge_path(@hedge), class: "bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition" %>
-    <%= button_to "Delete", hedge_path(@hedge), method: :delete, class: "bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition", data: { turbo_confirm: "Delete this hedge?" } %>
+    <%= button_to "Sync Now", sync_now_hedge_path(@hedge), method: :post, class: "bg-gray-700 hover:bg-gray-600 text-gray-300 px-4 py-2 rounded-lg text-sm font-medium transition" %>
+    <%= link_to "Edit", edit_hedge_path(@hedge), class: "bg-gray-700 hover:bg-gray-600 text-gray-300 px-4 py-2 rounded-lg text-sm font-medium transition" %>
+    <%= button_to "Delete", hedge_path(@hedge), method: :delete, class: "bg-gray-700 hover:bg-gray-600 text-gray-300 px-4 py-2 rounded-lg text-sm font-medium transition", data: { turbo_confirm: "Delete this hedge?" } %>
   </div>
 </div>
 
