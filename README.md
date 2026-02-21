@@ -4,7 +4,7 @@ Self-hosted delta-neutral hedging automation for Uniswap V3 concentrated liquidi
 
 ## WARNING
 
-Pre-alpha dev stage. Bugs and code quality issues present.
+Pre-alpha dev stage. High likelyhood of bugs being present.
 
 ## How It Works
 
