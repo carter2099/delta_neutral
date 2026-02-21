@@ -6,6 +6,10 @@ Self-hosted delta-neutral hedging automation for Uniswap V3 concentrated liquidi
 
 Pre-alpha dev stage. High likelyhood of bugs being present.
 
+![Dashboard](docs/images/dashboard.png)
+
+![Position View](docs/images/position-view.png)
+
 ## How It Works
 
 1. Connect a wallet with Uniswap V3 positions
