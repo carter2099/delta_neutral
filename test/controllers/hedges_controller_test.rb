@@ -42,7 +42,6 @@ class HedgesControllerTest < ActionDispatch::IntegrationTest
 
   test "should destroy hedge and close shorts" do
     hedge = hedges(:eth_hedge)
-    closed_assets = []
 
     mock_service = Minitest::Mock.new
     mock_service.expect(:close_short, nil, asset: "ETH")

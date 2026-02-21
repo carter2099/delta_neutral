@@ -1,6 +1,14 @@
 # Omakase Ruby styling for Rails
 inherit_gem: { rubocop-rails-omakase: rubocop.yml }
 
+# Rails-generated schema files — not worth linting
+Layout/SpaceInsideArrayLiteralBrackets:
+  Exclude:
+    - "db/schema.rb"
+    - "db/cable_schema.rb"
+    - "db/cache_schema.rb"
+    - "db/queue_schema.rb"
+
 # Dead code / unreachable
 Lint/UnreachableCode:
   Enabled: true

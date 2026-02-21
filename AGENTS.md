@@ -75,7 +75,7 @@ See `.env.example` for the full list. Required in production:
 
 ```bash
 bin/dev          # Start web server + Solid Queue + Tailwind watcher
-bin/rails test   # Run all tests
+bin/rake         # Run lint (RuboCop) + tests (default Rake task)
 bin/rails db:seed # Seed lookup tables + dev admin user (admin@example.com / password123)
 ```
 
@@ -85,7 +85,12 @@ Tests use WebMock for HTTP stubbing and simple mock objects for SDK interactions
 
 ## Versioning
 
-The app version lives in `config/version.rb` as `DeltaNeutral::VERSION`. This is the single source of truth — it's loaded via `config/application.rb` and displayed in the navbar layout. When bumping the version, update that constant and tag the release (`git tag v0.0.2`).
+The app version lives in `config/version.rb` as `DeltaNeutral::VERSION`. This is the single source of truth — it's loaded via `config/application.rb` and displayed in the navbar layout. To cut a release:
+
+1. Update the version in `config/version.rb`
+2. Add a new section to `CHANGELOG.md` under the new version heading (e.g., `## [0.0.2] - 2026-03-01`)
+3. Commit, tag (`git tag v0.0.2`), and push with `--tags`
+4. The `release.yml` workflow automatically creates a GitHub Release using the CHANGELOG entry
 
 ## File Organization
 
