@@ -15,7 +15,7 @@
   </tr>
   <tr>
     <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Realized PnL</td>
-    <td style="padding: 8px; border: 1px solid #ddd;">$<%= number_with_precision(@rebalance.realized_pnl, precision: 2) %></td>
+    <td style="padding: 8px; border: 1px solid #ddd;"><%= format_usd(@rebalance.realized_pnl) %></td>
   </tr>
   <tr>
     <td style="padding: 8px; border: 1px solid #ddd; font-weight: bold;">Target</td>

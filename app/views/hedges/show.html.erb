@@ -91,17 +91,17 @@
       <% @shorts.each do |s| %>
         <tr class="border-b border-gray-800/50">
           <td class="p-4 text-white font-medium"><%= s[:asset] %></td>
-          <td class="p-4 text-right text-gray-300">$<%= number_with_delimiter(number_with_precision(s[:position_value], precision: 2)) %></td>
+          <td class="p-4 text-right text-gray-300"><%= format_usd(s[:position_value]) %></td>
           <td class="p-4 text-right text-gray-300"><%= number_with_precision(s[:size].abs, precision: 6) %></td>
           <td class="p-4 text-right <%= s[:unrealized_pnl] >= 0 ? 'text-green-400' : 'text-red-400' %>">
-            $<%= number_with_precision(s[:unrealized_pnl], precision: 2) %>
+            <%= format_usd(s[:unrealized_pnl]) %>
           </td>
-          <td class="p-4 text-right text-gray-300">$<%= number_with_delimiter(number_with_precision(s[:entry_price], precision: 2)) %></td>
-          <td class="p-4 text-right text-gray-300">$<%= number_with_delimiter(number_with_precision(s[:mark_price], precision: 2)) %></td>
+          <td class="p-4 text-right text-gray-300"><%= format_usd(s[:entry_price]) %></td>
+          <td class="p-4 text-right text-gray-300"><%= format_usd(s[:mark_price]) %></td>
           <td class="p-4 text-right text-gray-300">
-            <%= s[:liquidation_price] ? "$#{number_with_delimiter(number_with_precision(s[:liquidation_price], precision: 2))}" : "—" %>
+            <%= s[:liquidation_price] ? format_usd(s[:liquidation_price]) : "—" %>
           </td>
-          <td class="p-4 text-right text-gray-300">$<%= number_with_delimiter(number_with_precision(s[:margin_used], precision: 2)) %></td>
+          <td class="p-4 text-right text-gray-300"><%= format_usd(s[:margin_used]) %></td>
         </tr>
       <% end %>
       <% if @shorts.empty? %>
@@ -146,7 +146,7 @@
           <td class="p-4 text-right text-gray-300"><%= number_with_precision(r.old_short_size, precision: 6) %></td>
           <td class="p-4 text-right text-white"><%= number_with_precision(r.new_short_size, precision: 6) %></td>
           <td class="p-4 text-right <%= r.realized_pnl >= 0 ? 'text-green-400' : 'text-red-400' %>">
-            $<%= number_with_precision(r.realized_pnl, precision: 2) %>
+            <%= format_usd(r.realized_pnl) %>
           </td>
           <td class="p-4 text-right text-gray-400 text-sm"><%= r.rebalanced_at.strftime("%b %-d, %-l:%M%P") %></td>
         </tr>

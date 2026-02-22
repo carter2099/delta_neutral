@@ -4,7 +4,7 @@ Hedge Rebalanced
 Asset: <%= @rebalance.asset %>
 Old Short Size: <%= number_with_precision(@rebalance.old_short_size, precision: 8) %>
 New Short Size: <%= number_with_precision(@rebalance.new_short_size, precision: 8) %>
-Realized PnL: $<%= number_with_precision(@rebalance.realized_pnl, precision: 2) %>
+Realized PnL: <%= format_usd(@rebalance.realized_pnl) %>
 Target: <%= number_to_percentage(@hedge.target * 100, precision: 1) %>
 Tolerance: <%= number_to_percentage(@hedge.tolerance * 100, precision: 1) %>
 Position: <%= @position.asset0 %>/<%= @position.asset1 %>
