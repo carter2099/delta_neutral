@@ -2,11 +2,7 @@
 
 Self-hosted delta-neutral hedging automation for Uniswap V3 concentrated liquidity positions. Monitors your CLPs and automatically rebalances short hedges on Hyperliquid to maintain a target hedge percentage within a configurable tolerance band.
 
-## WARNING
-
-Pre-alpha dev stage. High likelyhood of bugs being present.
-
-## Screenshots
+---
 
 ![Dashboard](docs/images/dashboard.png)
 
@@ -116,6 +112,23 @@ kamal deploy
 - The SQLite database is stored in `storage/` - back this up regularly
 - Set up SSL/TLS for secure credential handling
 - Store API keys securely and never commit them to git
+
+## Development
+
+Make changes, then validate with lint + tests:
+
+```bash
+bin/rake    # Runs RuboCop and the full test suite
+```
+
+Both must pass before committing. To open a PR:
+
+```bash
+git checkout -b my-feature
+# make changes, commit
+git push -u origin my-feature
+gh pr create
+```
 
 ## License
 
