@@ -1,16 +1,21 @@
-wallet_sync:
-  class: WalletSyncJob
-  schedule: every minute
+default: &default
+  wallet_sync:
+    class: WalletSyncJob
+    schedule: every minute
 
-position_sync:
-  class: PositionSyncJob
-  schedule: every minute
+  position_sync:
+    class: PositionSyncJob
+    schedule: every minute
 
-hedge_sync:
-  class: HedgeSyncJob
-  schedule: every 5 minutes
+  hedge_sync:
+    class: HedgeSyncJob
+    schedule: every 5 minutes
 
 production:
+  <<: *default
   clear_solid_queue_finished_jobs:
     command: "SolidQueue::Job.clear_finished_in_batches(sleep_between_batches: 0.3)"
     schedule: every hour at minute 12
+
+development:
+  <<: *default

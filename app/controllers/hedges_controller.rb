@@ -84,6 +84,7 @@ class HedgesController < ApplicationController
     end
 
     if @hedge.save
+      HedgeSyncJob.perform_later(@hedge.id)
       redirect_to hedge_path(@hedge), notice: "Hedge created successfully."
     else
       @unhedged_positions = unhedged_positions

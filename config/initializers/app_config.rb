@@ -1,4 +1,4 @@
-unless Rails.env.test?
+unless Rails.env.test? || ENV["SECRET_KEY_BASE_DUMMY"].present?
   required_vars = %w[
     HYPERLIQUID_PRIVATE_KEY
     HYPERLIQUID_WALLET_ADDRESS
