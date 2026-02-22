@@ -33,8 +33,8 @@
               <%= link_to "Settings", edit_settings_path, class: "text-gray-300 hover:text-white transition text-sm font-medium" %>
             </div>
             <div class="flex items-center space-x-4">
-              <span class="text-gray-400 text-sm"><%= Current.user.first_name %> <%= Current.user.last_name %></span>
-              <%= button_to "Logout", session_path, method: :delete, class: "text-gray-400 hover:text-white text-sm font-medium transition" %>
+              <span class="text-gray-400 text-sm leading-none"><%= Current.user.first_name %> <%= Current.user.last_name %></span>
+              <%= button_to "Logout", session_path, method: :delete, class: "text-gray-400 hover:text-white text-sm font-medium transition leading-none p-0 m-0", form_class: "flex items-center m-0 p-0" %>
             </div>
           </div>
         </div>
