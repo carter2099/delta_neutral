@@ -1,5 +1,5 @@
 ---
-name: review-slop
+name: clean-up
 description: Swarm-review the Delta Neutral codebase for AI-generated slop and fix it. Launches 5 parallel agents across domain areas to find and remove dead code, unnecessary nil guards, unused API fields, and other violations of the AGENTS.md code quality rules.
 ---
 
