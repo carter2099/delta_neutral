@@ -1,5 +1,6 @@
 # Delivers hedge rebalance notification emails to position owners.
 class HedgeRebalanceMailer < ApplicationMailer
+  helper ApplicationHelper
   # Sends a notification email when a short position has been rebalanced.
   #
   # The subject includes the asset symbol and the old vs. new short sizes so
