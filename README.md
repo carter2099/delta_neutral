@@ -10,12 +10,13 @@ Self-hosted delta-neutral hedging automation for Uniswap V3 concentrated liquidi
 
 ## How It Works
 
-1. Connect a wallet with Uniswap V3 positions
-2. Create a hedge with a target percentage (e.g. 50%) and tolerance (e.g. 10%)
-3. The app continuously monitors your pool amounts and opens/closes shorts on Hyperliquid to keep the hedge within tolerance
-4. If the position moves out of range and an asset drops to zero, the short for that asset is automatically closed while the other asset's hedge continues
+1. (Safely) deploy the app with a Hyperliquid private key
+2. Paste a wallet address with Uniswap V3 positions
+3. Create a hedge with a target percentage (e.g. 50%) and tolerance (e.g. 10%)
+4. The app continuously monitors your pool amounts and opens/closes shorts on Hyperliquid to keep the hedge within tolerance
+5. If the position moves out of range and an asset drops to zero, the short for that asset is automatically closed while the other asset's hedge continues
 
-Each asset in a pair is hedged independently, allowing for asymmetric movements.
+Each asset in a pair is hedged independently, allowing for asymmetric movements. PnL is tracked over time.
 
 ## Features
 
@@ -31,11 +32,11 @@ Each asset in a pair is hedged independently, allowing for asymmetric movements.
 
 ## Prerequisites
 
-- Ruby 3.4.8
-- SQLite3
+- **Ruby 3.4.8** 
 - A [Hyperliquid](https://hyperliquid.xyz) account with API credentials
-- A [The Graph](https://thegraph.com) API key
-- SMTP credentials for email notifications (optional)
+- A [The Graph](https://thegraph.com) API key - used for Uniswap data
+- EVM RPC endpoints (e.g. [Alchemy](https://www.alchemy.com) or [Infura](https://www.infura.io)) for Ethereum, Arbitrum, and Base - used for on-chain fee reads
+- SMTP credentials for email notifications
 
 ## Setup
 
@@ -66,12 +67,19 @@ HYPERLIQUID_TESTNET=true          # Set to false for mainnet
 UNISWAP_SUBGRAPH_URL=https://gateway.thegraph.com/api/subgraphs/id/5zvR82QoaXYFyDEKLZ9t6v9adgnptxYpKpSbxtgVENFV
 THEGRAPH_API_KEY=
 
-# SMTP (optional, for rebalance notifications)
+# Ethereum RPC (per-network, e.g. Alchemy)
+ETHEREUM_RPC_URL=
+ARBITRUM_RPC_URL=
+BASE_RPC_URL=
+
+# SMTP 
 SMTP_ADDRESS=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USERNAME=
 SMTP_PASSWORD=
 SMTP_DOMAIN=
+SMTP_AUTHENTICATION=plain
+SMTP_ENABLE_STARTTLS=true
 ```
 
 Start the development server:
