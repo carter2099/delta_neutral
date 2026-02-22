@@ -8,4 +8,11 @@ require "dotenv/load"
 require_relative "../config/environment"
 require "solid_queue/cli"
 
+# Broadcast Rails.logger to stdout so job debug logs appear in foreman output
+if Rails.env.development?
+  stdout_logger = ActiveSupport::Logger.new($stdout)
+  stdout_logger.formatter = Rails.logger.formatter
+  Rails.logger.broadcast_to(stdout_logger)
+end
+
 SolidQueue::Cli.start(ARGV)
