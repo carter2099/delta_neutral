@@ -92,26 +92,20 @@ This starts the Rails server, Solid Queue background jobs, and Tailwind CSS watc
 
 Default dev login: `admin@example.com` / `password123`
 
-## Docker
+## Deployment
+
+Production deployment uses Docker Compose. Create a `.env.production` file with your credentials (see `.env.example`), then:
 
 ```bash
-docker build -t delta_neutral:0.0.1 .
-
-docker run -d -p 80:80 \
-  -e RAILS_MASTER_KEY=<value from config/master.key> \
-  -e HYPERLIQUID_PRIVATE_KEY=<key> \
-  -e HYPERLIQUID_WALLET_ADDRESS=<address> \
-  -e HYPERLIQUID_TESTNET=false \
-  -e UNISWAP_SUBGRAPH_URL=<url> \
-  -e THEGRAPH_API_KEY=<key> \
-  --name delta_neutral \
-  delta_neutral
+docker compose -f docker-compose.prod.yml up -d --build
 ```
 
-For production deployment with [Kamal](https://kamal-deploy.org), configure `config/deploy.yml` with your server IP and registry, then:
+The app will be available on port `43080`. The SQLite database is bind-mounted from `./storage` so data persists across container restarts.
+
+To rebuild after pulling changes:
 
 ```bash
-kamal deploy
+docker compose -f docker-compose.prod.yml up -d --build
 ```
 
 ## Production Notes
