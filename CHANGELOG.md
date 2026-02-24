@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.3] - 2026-02-24
+
+### Changed
+- Pinned nokogiri >= 1.19.1 and rack >= 3.2.5 for security patches
+- Updated actions/checkout from v5 to v6 in CI workflow
+
 ## [0.1.2] - 2026-02-24
 
 ### Added
