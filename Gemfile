@@ -24,6 +24,8 @@ gem "tailwindcss-rails"
 gem "hyperliquid"
 # Ethereum JSON-RPC client for on-chain reads (uncollected fee queries)
 gem "eth"
+gem "nokogiri", ">= 1.19.1"
+gem "rack", ">= 3.2.5"
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem "tzinfo-data", platforms: %i[ windows jruby ]
