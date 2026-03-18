@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.4] - 2026-03-18
+
+### Changed
+- Bumped kamal, thruster, webmock, sqlite3, eth, brakeman, solid_queue, selenium-webdriver, web-console, trix, and actions/upload-artifact dependencies
+
 ## [0.1.3] - 2026-02-24
 
 ### Changed
