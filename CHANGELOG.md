@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.5] - 2026-03-25
+
+### Changed
+- Bumped thruster, solid_queue, nokogiri, rails, and bcrypt dependencies
+
 ## [0.1.4] - 2026-03-18
 
 ### Changed
