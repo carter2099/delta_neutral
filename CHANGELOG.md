@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.6] - 2026-04-23
+
+### Changed
+- Bumped rack, selenium-webdriver, puma (7→8), sqlite3, propshaft, and yard dependencies
+
+### Security
+- Updated action_text-trix to 2.1.18 to address XSS via JSON deserialization bypass in drag-and-drop ([GHSA-53p3-c7vp-4mcc](https://github.com/basecamp/trix/security/advisories/GHSA-53p3-c7vp-4mcc))
+
 ## [0.1.5] - 2026-03-25
 
 ### Changed
