@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.8] - 2026-05-06
+
+### Changed
+- Bumped hyperliquid, bootsnap, and sqlite3 dependencies
+
 ## [0.1.7] - 2026-04-29
 
 ### Changed
