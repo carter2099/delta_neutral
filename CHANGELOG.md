@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.10] - 2026-05-13
+
+### Security
+- Bumped addressable to 2.9.0 to address ReDoS in Addressable templates ([GHSA-h27x-rffw-24p4](https://github.com/sporkmonger/addressable/security/advisories/GHSA-h27x-rffw-24p4))
+- Bumped rack-session to 2.1.2 to address session forgery via decrypt failure fallback ([GHSA-33qg-7wpp-89cq](https://github.com/rack/rack-session/security/advisories/GHSA-33qg-7wpp-89cq))
+
 ## [0.1.9] - 2026-05-13
 
 ### Changed
