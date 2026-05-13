@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.9] - 2026-05-13
+
+### Changed
+- Bumped hyperliquid, bootsnap, and selenium-webdriver dependencies
+
 ## [0.1.8] - 2026-05-06
 
 ### Changed
