@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.11] - 2026-05-20
+
+### Changed
+- Bumped jbuilder and thruster dependencies
+
+### Security
+- Bumped net-imap to 0.6.4 to address DoS in SCRAM-* authentication ([GHSA-87pf-fpwv-p7m7](https://github.com/ruby/net-imap/security/advisories/GHSA-87pf-fpwv-p7m7)), command injection via raw arguments ([GHSA-hm49-wcqc-g2xg](https://github.com/ruby/net-imap/security/advisories/GHSA-hm49-wcqc-g2xg)), command injection via unvalidated Symbol inputs ([GHSA-75xq-5h9v-w6px](https://github.com/ruby/net-imap/security/advisories/GHSA-75xq-5h9v-w6px)), and related advisories ([GHSA-q2mw-fvj9-vvcw](https://github.com/ruby/net-imap/security/advisories/GHSA-q2mw-fvj9-vvcw), [GHSA-vcgp-9326-pqcp](https://github.com/ruby/net-imap/security/advisories/GHSA-vcgp-9326-pqcp))
+
 ## [0.1.10] - 2026-05-13
 
 ### Security
