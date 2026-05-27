@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.13] - 2026-05-27
+
+### Changed
+- Bumped yard dependency
+
 ## [0.1.12] - 2026-05-27
 
 ### Changed
