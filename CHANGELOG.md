@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.14] - 2026-05-27
+
+### Changed
+- Bumped image_processing to 2.0.1 (major version)
+
 ## [0.1.13] - 2026-05-27
 
 ### Changed
