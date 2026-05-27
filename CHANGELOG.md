@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.12] - 2026-05-27
+
+### Changed
+- Bumped bootsnap, puma, hyperliquid, solid_cable, and jbuilder dependencies
+
+### Security
+- Bumped faraday to 2.14.2 to address incomplete fix for protocol-relative URI host scoping bypass ([CVE-2026-33637](https://nvd.nist.gov/vuln/detail/CVE-2026-33637), GHSA-5rv5-xj5j-3484)
+
 ## [0.1.11] - 2026-05-20
 
 ### Changed
