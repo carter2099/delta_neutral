@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.15] - 2026-06-04
+
+### Changed
+- Bumped bootsnap and image_processing dependencies
+
+### Security
+- Bumped erb to 6.0.4 to address @_init deserialization guard bypass ([CVE-2026-41316](https://nvd.nist.gov/vuln/detail/CVE-2026-41316), GHSA-q339-8rmv-2mhv)
+
 ## [0.1.14] - 2026-05-27
 
 ### Changed
