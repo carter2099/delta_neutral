@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.16] - 2026-06-10
+
+### Changed
+- Bumped sqlite3 dependency
+
 ## [0.1.15] - 2026-06-04
 
 ### Changed
