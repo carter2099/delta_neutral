@@ -165,7 +165,7 @@ GEM
     http-2 (1.1.2)
     httpx (1.7.2)
       http-2 (>= 1.0.0)
-    hyperliquid (1.6.0)
+    hyperliquid (1.8.0)
       eth (~> 0.5)
       faraday (~> 2.0)
       faraday-retry (~> 2.0)
@@ -568,7 +568,7 @@ CHECKSUMS
   hashdiff (1.2.1) sha256=9c079dbc513dfc8833ab59c0c2d8f230fa28499cc5efb4b8dd276cf931457cd1
   http-2 (1.1.2) sha256=8c1cb40203fc60b521c491509fee96c7b08092975eb30036465992433715ed40
   httpx (1.7.2) sha256=10cdcd5b03794de743bec87e8cdba2ca93e2124084b6cdb1ad01b00c192a51f7
-  hyperliquid (1.6.0) sha256=38dfb47e4ae6342b45d693c3ea13ac4a52c2e8673bb87b7b038521596c68c123
+  hyperliquid (1.8.0) sha256=d2ad6a12892835da2764856721ac8b8674d65791e14d9b78d7e14346fb4708c7
   i18n (1.14.8) sha256=285778639134865c5e0f6269e0b818256017e8cde89993fdfcbfb64d088824a5
   image_processing (2.0.2) sha256=d0cf990f862d64efb1a14916044bf4b5bb2bccc7e235022413cde46019799cfa
   importmap-rails (2.2.3) sha256=7101be2a4dc97cf1558fb8f573a718404c5f6bcfe94f304bf1f39e444feeb16a
