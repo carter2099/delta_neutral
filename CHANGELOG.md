@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.17] - 2026-06-17
+
+### Changed
+- Bumped brakeman, selenium-webdriver, hyperliquid, and tailwindcss-rails dependencies
+
+### Security
+- Bumped net-imap to 0.6.4.1 to address command injection via non-synchronizing literal ([CVE-2026-47240](https://nvd.nist.gov/vuln/detail/CVE-2026-47240), GHSA-8p34-64r3-mwg8), denial of service via incomplete validation ([CVE-2026-47241](https://nvd.nist.gov/vuln/detail/CVE-2026-47241), GHSA-c4fp-cxrr-mj66), and command injection via ID command argument ([CVE-2026-47242](https://nvd.nist.gov/vuln/detail/CVE-2026-47242), GHSA-46q3-7gv7-qmgg)
+
 ## [0.1.16] - 2026-06-10
 
 ### Changed
