@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.18] - 2026-06-24
+
+### Changed
+- Bumped kamal from 2.11.0 to 2.12.0
+- Bumped nokogiri from 1.19.3 to 1.19.4
+
+### Security
+- Bumped concurrent-ruby from 1.3.6 to 1.3.7 to address AtomicReference#update livelock with Float::NAN ([CVE-2026-54904](https://nvd.nist.gov/vuln/detail/CVE-2026-54904), GHSA-h8w8-99g7-qmvj), ReentrantReadWriteLock read-count overflow ([CVE-2026-54905](https://nvd.nist.gov/vuln/detail/CVE-2026-54905), GHSA-wv3x-4vxv-whpp), and ReadWriteLock wrong-thread write release ([CVE-2026-54906](https://nvd.nist.gov/vuln/detail/CVE-2026-54906), GHSA-6wx8-w4f5-wwcr)
+- Bumped faraday from 2.14.2 to 2.14.3 to address uncontrolled recursion in NestedParamsEncoder allowing stack exhaustion DoS ([CVE-2026-54297](https://nvd.nist.gov/vuln/detail/CVE-2026-54297), GHSA-98m9-hrrm-r99r)
+
 ## [0.1.17] - 2026-06-17
 
 ### Changed
