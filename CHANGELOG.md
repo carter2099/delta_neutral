@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.19] - 2026-07-01
+
+### Changed
+- Bumped thruster from 0.1.21 to 0.1.22
+
+### Security
+- Bumped crass from 1.0.6 to 1.0.7 to address deeply nested CSS blocks and functions triggering SystemStackError or excessive memory usage ([GHSA-6jxj-px6v-747w](https://github.com/rgrove/crass/security/advisories/GHSA-6jxj-px6v-747w)), large numeric exponents causing CPU and memory denial of service ([GHSA-6wmf-3r64-vcwv](https://github.com/rgrove/crass/security/advisories/GHSA-6wmf-3r64-vcwv)), non-ASCII characters causing superlinear CPU consumption ([GHSA-8vfg-2r28-hvhj](https://github.com/rgrove/crass/security/advisories/GHSA-8vfg-2r28-hvhj)), and adjacent CSS comments triggering SystemStackError ([GHSA-wwpr-jff3-395c](https://github.com/rgrove/crass/security/advisories/GHSA-wwpr-jff3-395c))
+- Bumped msgpack from 1.8.0 to 1.8.3 to address use-after-free in MessagePack::Buffer#clear enabling cross-buffer disclosure ([CVE-2026-54522](https://www.cve.org/CVERecord/SearchResults?query=CVE-2026-54522), [GHSA-4mrv-5p47-p938](https://github.com/msgpack/msgpack-ruby/security/advisories/GHSA-4mrv-5p47-p938))
+
 ## [0.1.18] - 2026-06-24
 
 ### Changed
