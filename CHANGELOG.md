@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.20] - 2026-07-28
+
+### Changed
+- Bumped yard from 0.9.44 to 0.9.45
+- Bumped selenium-webdriver from 4.45.0 to 4.46.0
+- Bumped solid_cable from 4.0.0 to 4.0.2
+- Bumped thruster from 0.1.22 to 0.1.23
+
 ## [0.1.19] - 2026-07-01
 
 ### Changed
