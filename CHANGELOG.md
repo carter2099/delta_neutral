@@ -4,6 +4,18 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.21] - 2026-08-05
+
+### Changed
+- Bumped rails from 8.1.3 to 8.1.3.1
+- Bumped solid_queue from 1.4.0 to 1.6.0
+
+### Security
+- Bumped json from 2.19.3 to 2.21.2 to address heap buffer overflow when streaming to an IO ([CVE-2026-54696](https://nvd.nist.gov/vuln/detail/CVE-2026-54696), [GHSA-x2f5-4prf-w687](https://github.com/ruby/json/security/advisories/GHSA-x2f5-4prf-w687))
+- Bumped loofah from 2.25.1 to 2.25.2 to address javascript: URI bypass via numeric character references without semicolons ([GHSA-5qhf-9phg-95m2](https://github.com/flavorjones/loofah/security/advisories/GHSA-5qhf-9phg-95m2)), javascript: URI bypass via named whitespace character references ([GHSA-8whx-365g-h9vv](https://github.com/flavorjones/loofah/security/advisories/GHSA-8whx-365g-h9vv)), and SVG href attribute bypassing local-reference restriction ([GHSA-9wjq-cp2p-hrgf](https://github.com/flavorjones/loofah/security/advisories/GHSA-9wjq-cp2p-hrgf))
+- Bumped rails-html-sanitizer from 1.7.0 to 1.7.1 to address possible XSS with certain configurations ([GHSA-cj75-f6xr-r4g7](https://github.com/rails/rails-html-sanitizer/security/advisories/GHSA-cj75-f6xr-r4g7))
+- Bumped websocket-driver from 0.8.0 to 0.8.2 to address memory exhaustion via protocol length headers ([CVE-2026-54463](https://www.cve.org/CVERecord/SearchResults?query=CVE-2026-54463), [GHSA-ghhp-3qvg-889p](https://github.com/faye/websocket-driver-ruby/security/advisories/GHSA-ghhp-3qvg-889p)), resource limit bypass via message compression ([CVE-2026-54464](https://www.cve.org/CVERecord/SearchResults?query=CVE-2026-54464), [GHSA-33ph-fccm-39pj](https://github.com/faye/websocket-driver-ruby/security/advisories/GHSA-33ph-fccm-39pj)), memory exhaustion in HTTP header parser ([CVE-2026-54465](https://www.cve.org/CVERecord/SearchResults?query=CVE-2026-54465), [GHSA-8j3g-f24p-4mpw](https://github.com/faye/websocket-driver-ruby/security/advisories/GHSA-8j3g-f24p-4mpw)), and DoS via malformed Host header ([CVE-2026-61666](https://www.cve.org/CVERecord?id=CVE-2026-61666), [GHSA-2x63-gw47-w4mm](https://github.com/faye/websocket-driver-ruby/security/advisories/GHSA-2x63-gw47-w4mm))
+
 ## [0.1.20] - 2026-07-28
 
 ### Changed

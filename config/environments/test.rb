@@ -31,6 +31,9 @@ Rails.application.configure do
   # Store uploaded files on the local file system in a temporary directory.
   config.active_storage.service = :test
 
+  # Don't require vips/mini_magick system libraries in test (no ActiveStorage attachments)
+  config.active_storage.variant_processor = :disabled
+
   # Tell Action Mailer not to deliver emails to the real world.
   # The :test delivery method accumulates sent emails in the
   # ActionMailer::Base.deliveries array.
