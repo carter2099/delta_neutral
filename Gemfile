@@ -47,7 +47,10 @@ gem "thruster", require: false
 
 # Use Active Storage variants [https://guides.rubyonrails.org/active_storage_overview.html#transforming-images]
 gem "image_processing", "~> 2.0"
-gem "ruby-vips", "~> 2.0"
+# Keep the gem installed (docker build needs it for ImageProcessing::Vips) but
+# don't auto-require at boot: ruby-vips loads libvips via FFI, which is absent
+# on the homelab host. Explicit `require "vips"` paths still work.
+gem "ruby-vips", "~> 2.0", require: false
 
 group :development, :test do
   gem "dotenv-rails"
