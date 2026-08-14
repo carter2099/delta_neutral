@@ -19,7 +19,10 @@ jobs:
           bundler-cache: true
 
       - name: Scan for common Rails security vulnerabilities using static analysis
-        run: bin/brakeman --no-pager
+        # bundle exec bypasses the Rails bin/brakeman wrapper, which forces
+        # --ensure-latest and exits 5 when a newer brakeman exists. Exit 5 is a
+        # version-freshness advisory, not a scan finding (agent-fleet-review).
+        run: bundle exec brakeman --no-pager
       
       - name: Scan for known security vulnerabilities in gems used
         run: bin/bundler-audit
