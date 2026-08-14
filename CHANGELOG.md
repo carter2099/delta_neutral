@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.22] - 2026-08-14
+
+### Changed
+- Bumped bootsnap from 1.24.6 to 1.25.0
+- Bumped image_processing from 2.0.2 to 2.0.3
+
+### Security
+- Bumped sqlite3 from 2.9.5 to 2.9.6 to address use-after-free in SQLite aggregate arguments in heap-allocated argument array ([GHSA-mwm8-39rw-8826](https://github.com/sparklemotion/sqlite3-ruby/security/advisories/GHSA-mwm8-39rw-8826))
+
 ## [0.1.21] - 2026-08-05
 
 ### Changed
