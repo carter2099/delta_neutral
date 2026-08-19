@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.23] - 2026-08-19
+
+### Changed
+- Bumped brakeman from 8.0.5 to 8.0.6
+- Bumped rack from 3.2.6 to 3.2.7
+- Bumped selenium-webdriver from 4.46.0 to 4.47.0
+- Bumped thruster from 0.1.23 to 0.1.25
+
+### Security
+- Bumped mail from 2.9.0 to 2.9.1 to address email address spoofing via malformed RFC 2047 encoded-words ([GHSA-mvxr-6m87-mv2q](https://github.com/mikel/mail/security/advisories/GHSA-mvxr-6m87-mv2q))
+
 ## [0.1.22] - 2026-08-14
 
 ### Changed
