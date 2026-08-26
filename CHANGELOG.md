@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.24] - 2026-08-26
+
+### Changed
+- Bumped webmock from 3.26.2 to 3.26.3
+- Bumped solid_queue from 1.6.0 to 1.7.0
+
 ## [0.1.23] - 2026-08-19
 
 ### Changed
