@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.25] - 2026-09-02
+
+### Changed
+- Bumped selenium-webdriver from 4.47.0 to 4.48.0
+- Bumped thruster from 0.1.25 to 0.1.26
+- Bumped mission_control-jobs from 1.1.0 to 1.2.0
+- Bumped webmock from 3.26.3 to 3.26.4
+
 ## [0.1.24] - 2026-08-26
 
 ### Changed
