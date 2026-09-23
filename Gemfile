@@ -24,6 +24,11 @@ gem "tailwindcss-rails"
 gem "hyperliquid"
 # Ethereum JSON-RPC client for on-chain reads (uncollected fee queries)
 gem "eth"
+# eth requires rbsecp256k1, whose last release (6.0.0) pins rubyzip ~> 2.3 and
+# cannot take the fix for CVE-2026-85396 (rubyzip >= 3.4). Upstream is
+# unmaintained, so pin a fork whose only change is that constraint. Remove
+# this pin once an upstream rbsecp256k1 release allows rubyzip >= 3.4.
+gem "rbsecp256k1", github: "carter2099/rbsecp256k1", ref: "4838413f8eeb8270955b8bfbc1de6ea1b41bbd56"
 gem "nokogiri", ">= 1.19.1"
 gem "rack", ">= 3.2.5"
 
