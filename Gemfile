@@ -26,9 +26,10 @@ gem "hyperliquid"
 gem "eth"
 # eth requires rbsecp256k1, whose last release (6.0.0) pins rubyzip ~> 2.3 and
 # cannot take the fix for CVE-2026-85396 (rubyzip >= 3.4). Upstream is
-# unmaintained, so pin a fork whose only change is that constraint. Remove
-# this pin once an upstream rbsecp256k1 release allows rubyzip >= 3.4.
-gem "rbsecp256k1", github: "carter2099/rbsecp256k1", ref: "4838413f8eeb8270955b8bfbc1de6ea1b41bbd56"
+# unmaintained, so pin a fork that allows rubyzip >= 3.4 and bundles
+# libsecp256k1 v0.8.0 (upstream 6.0.0 bundles v0.2.0). Remove this pin once
+# an upstream rbsecp256k1 release allows rubyzip >= 3.4.
+gem "rbsecp256k1", github: "carter2099/rbsecp256k1", ref: "bbfe3e346828e39d13aa590cca7cc74f663d2fde"
 gem "nokogiri", ">= 1.19.1"
 gem "rack", ">= 3.2.5"
 

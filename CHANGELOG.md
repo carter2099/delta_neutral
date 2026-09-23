@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.28] - 2026-09-23
+
+### Security
+- Moved the `rbsecp256k1` fork ([carter2099/rbsecp256k1](https://github.com/carter2099/rbsecp256k1)) from 6.0.0 to 6.1.0, which compiles the bundled libsecp256k1 from v0.8.0 instead of v0.2.0 (2022). That picks up upstream's constant-time fixes for Clang >= 14 and GCC >= 13 (v0.3.1/v0.3.2) and the more robust stack clearing of secrets (v0.6.0, v0.7.1). `eth` signing and recovery are unchanged; verified against the EIP-712 `Mail` test vector.
+
 ## [0.1.27] - 2026-09-23
 
 ### Changed
