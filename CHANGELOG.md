@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.26] - 2026-09-23
+
+### Security
+- Moved rubyzip from 2.4.1 to 3.7.0 to fix a path traversal in `Zip::Entry#extract` ([CVE-2026-85396 / GHSA-47m2-wp7j-p9vc](https://github.com/advisories/GHSA-47m2-wp7j-p9vc)). The `eth` gem requires `rbsecp256k1`, whose last release (6.0.0, 2023) pins rubyzip to 2.x, so `rbsecp256k1` is now installed from the fork [carter2099/rbsecp256k1](https://github.com/carter2099/rbsecp256k1), which changes only that constraint. rubyzip was only used while compiling `rbsecp256k1` and by the test-only selenium-webdriver.
+
 ## [0.1.25] - 2026-09-02
 
 ### Changed
