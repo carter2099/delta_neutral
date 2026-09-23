@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.27] - 2026-09-23
+
+### Changed
+- Bumped bootsnap from 1.25.0 to 1.26.0
+- Bumped hyperliquid from 1.8.0 to 1.9.0
+- Bumped image_processing from 2.0.3 to 2.1.0
+- Bumped mission_control-jobs from 1.2.0 to 1.3.1
+- Bumped selenium-webdriver from 4.48.0 to 4.49.0
+
 ## [0.1.26] - 2026-09-23
 
 ### Security
