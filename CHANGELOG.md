@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.29] - 2026-09-30
+
+### Changed
+- Bumped rails from 8.1.3.1 to 8.1.4
+- Bumped solid_cable from 4.0.2 to 4.1.0
+
 ## [0.1.28] - 2026-09-23
 
 ### Security
