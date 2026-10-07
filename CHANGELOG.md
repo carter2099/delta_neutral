@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.30] - 2026-10-07
+
+### Changed
+- Bumped brakeman from 8.0.6 to 8.1.0
+- Bumped eth from 0.5.17 to 0.5.18
+- Bumped hyperliquid from 1.9.0 to 1.9.2
+- Bumped image_processing from 2.1.0 to 2.2.0
+- Bumped selenium-webdriver from 4.49.0 to 4.50.0
+
 ## [0.1.29] - 2026-09-30
 
 ### Changed
