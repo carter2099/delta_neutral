@@ -382,10 +382,9 @@ GEM
       ffi-compiler (>= 1.0, < 2.0)
       rake (~> 13)
     securerandom (0.4.1)
-    selenium-webdriver (4.49.0)
+    selenium-webdriver (4.50.0)
       base64 (~> 0.2)
       logger (~> 1.4)
-      rexml (~> 3.2, >= 3.2.5)
       rubyzip (>= 1.2.2, < 4.0)
       websocket (~> 1.0)
     solid_cable (4.1.0)
@@ -659,7 +658,7 @@ CHECKSUMS
   rubyzip (3.7.0) sha256=65c19294da75297a939006f3516deacc33185fbd721ff1954f7a231db6d3e121
   scrypt (3.1.0) sha256=67fde35bc7e3b7fe906c5be9c242acf95fe4a886c89572f405f6b11df30aa6af
   securerandom (0.4.1) sha256=cc5193d414a4341b6e225f0cb4446aceca8e50d5e1888743fac16987638ea0b1
-  selenium-webdriver (4.49.0) sha256=b430f091a3cababb356b6f6132e0e4f385b017819355f563557e1537819edc89
+  selenium-webdriver (4.50.0) sha256=d12f94025bc33af44428ed6b8def4896a7bb9c4521212579241650d6cb060fcb
   solid_cable (4.1.0) sha256=828e3d509207b82b4f05f4e9c85f696994710679b52d511aa7f97ebd212d3226
   solid_cache (1.0.10) sha256=bc05a2fb3ac78a6f43cbb5946679cf9db67dd30d22939ededc385cb93e120d41
   solid_queue (1.7.0) sha256=6566b70b801d1c317c81bba7bcdd5677c019afac584a30374b4164002ca356d3
