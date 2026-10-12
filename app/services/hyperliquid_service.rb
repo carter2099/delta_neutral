@@ -169,13 +169,31 @@ class HyperliquidService
 
   # Creates a new Hyperliquid subaccount.
   #
+  # The exchange responds with
+  # +{"status" => "ok", "response" => {"type" => "createSubAccount", "data" => "0x..."}}+;
+  # +data+ may also be a Hash carrying the address under +"subAccountUser"+.
+  #
   # @param name [String] the subaccount name
-  # @return [Hash] the SDK response containing the subaccount address
+  # @return [String] the new subaccount address
+  # @raise [RuntimeError] if the exchange rejects the request or the response
+  #   carries no valid address
   def create_subaccount(name:)
     Rails.logger.debug { "[HyperliquidService] create_subaccount: name=#{name}" }
     result = sdk.exchange.create_sub_account(name: name)
     Rails.logger.debug { "[HyperliquidService] create_subaccount result: #{result.inspect.truncate(200)}" }
-    result
+
+    unless result.is_a?(Hash) && result["status"] == "ok"
+      detail = result.is_a?(Hash) ? result["response"] : result
+      raise "Hyperliquid rejected create_subaccount(#{name}): #{detail.inspect}"
+    end
+
+    data = result.dig("response", "data")
+    address = data.is_a?(Hash) ? data["subAccountUser"] : data
+    unless address.is_a?(String) && address.match?(/\A0x\h{40}\z/)
+      raise "Hyperliquid create_subaccount(#{name}) returned no valid address: #{result.inspect.truncate(200)}"
+    end
+
+    address
   end
 
   # Transfers USDC from main account to a subaccount.
@@ -204,10 +222,15 @@ class HyperliquidService
 
   # Returns all subaccounts for the main wallet.
   #
-  # @return [Array<Hash>] subaccount objects with +"subAccountUser"+ addresses
+  # Uses the +subAccounts2+ info endpoint: the SDK's +user_subaccounts+ posts
+  # an invalid request type that the API rejects with HTTP 422. The API
+  # returns +null+ when the wallet has no subaccounts.
+  #
+  # @return [Array<Hash>] subaccount objects with +"name"+ and +"subAccountUser"+;
+  #   empty when the wallet has none
   def list_subaccounts
     Rails.logger.debug { "[HyperliquidService] list_subaccounts for #{@wallet_address}" }
-    result = sdk.info.user_subaccounts(@wallet_address)
+    result = Array(sdk.info.sub_accounts2(@wallet_address))
     Rails.logger.debug { "[HyperliquidService] list_subaccounts returned #{result.size} subaccount(s)" }
     result
   end
