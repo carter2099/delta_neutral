@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - Bumped hyperliquid from 1.9.2 to 2.0.0 (supersedes Dependabot #94). The app uses none of the APIs that 2.0.0 removed or changed (`Info#aligned_quote_token_info`, `Exchange#activate_outcome_deployer`, WebSocket `subscribe`).
 - The SDK now raises `ArgumentError` for a `HYPERLIQUID_PRIVATE_KEY` that isn't 64 hex characters (with an optional `0x` prefix). Every key that worked before still works.
 
+### Fixed
+- Subaccount listing called an SDK method (`Info#user_subaccounts`) whose request the Hyperliquid API rejects with HTTP 422, and it crashed when the wallet had no subaccounts because the API returns `null`. It now uses `Info#sub_accounts2` and treats `null` as no subaccounts.
+- Creating a subaccount stored `nil` as the hedge's account, because the new address is in the response's `response.data`, not a top-level `subAccountUser`. `create_subaccount` now returns the address and raises if the exchange rejects the request or returns no valid address.
+
 ## [0.1.30] - 2026-10-07
 
 ### Changed

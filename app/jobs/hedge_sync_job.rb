@@ -203,8 +203,7 @@ class HedgeSyncJob < ApplicationJob
     address = if available
       available["subAccountUser"]
     else
-      result = hyperliquid.create_subaccount(name: "hedge-#{hedge.id}-#{hl_asset.downcase}")
-      result["subAccountUser"]
+      hyperliquid.create_subaccount(name: "hedge-#{hedge.id}-#{hl_asset.downcase}")
     end
 
     # Persist the assignment

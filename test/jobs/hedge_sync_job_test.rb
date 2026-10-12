@@ -3,6 +3,8 @@ require "test_helper"
 class HedgeSyncJobTest < ActiveSupport::TestCase
   include ActionMailer::TestHelper
 
+  NEW_SUBACCOUNT = "0x" + "a" * 40
+
   setup do
     ENV["HYPERLIQUID_PRIVATE_KEY"] ||= "0xtest"
     ENV["HYPERLIQUID_WALLET_ADDRESS"] ||= "0xwallet"
@@ -37,7 +39,7 @@ class HedgeSyncJobTest < ActiveSupport::TestCase
       user_states[addr] || user_states[nil]
     end
     mock_info.define_singleton_method(:meta) { meta }
-    mock_info.define_singleton_method(:user_subaccounts) { |_| subaccounts }
+    mock_info.define_singleton_method(:sub_accounts2) { |_| subaccounts }
     if fills_error
       mock_info.define_singleton_method(:user_fills_by_time) { |_addr, _start_time| raise fills_error }
     else
@@ -48,7 +50,9 @@ class HedgeSyncJobTest < ActiveSupport::TestCase
     mock_exchange.define_singleton_method(:market_close) { |**_| { "status" => "ok" } }
     mock_exchange.define_singleton_method(:market_order) { |**_| { "status" => "ok" } }
     mock_exchange.define_singleton_method(:update_leverage) { |**_| { "status" => "ok" } }
-    mock_exchange.define_singleton_method(:create_sub_account) { |**_| { "subAccountUser" => "0xnewsub" } }
+    mock_exchange.define_singleton_method(:create_sub_account) do |**_|
+      { "status" => "ok", "response" => { "type" => "createSubAccount", "data" => NEW_SUBACCOUNT } }
+    end
     mock_exchange.define_singleton_method(:sub_account_transfer) { |**_| { "status" => "ok" } }
 
     mock_sdk = Object.new
@@ -246,10 +250,45 @@ class HedgeSyncJobTest < ActiveSupport::TestCase
 
     hedge.reload
     # 0xsub1 is taken by hedge3, main is taken by hedge2 → should create new
-    assert_equal "0xnewsub", hedge.asset0_hl_account
+    assert_equal NEW_SUBACCOUNT, hedge.asset0_hl_account
   ensure
     hedge3&.destroy
     position3&.destroy
+    hedge2&.destroy
+    position2&.destroy
+  end
+
+  test "creates subaccount and assigns its address when the wallet has none" do
+    hedge = hedges(:eth_hedge)
+
+    # Another hedge already on main for ETH and USDC
+    position2 = Position.create!(
+      user: hedge.position.user,
+      dex: hedge.position.dex,
+      wallet: hedge.position.wallet,
+      asset0: "WETH",
+      asset1: "USDC",
+      asset0_amount: "2.0",
+      asset1_amount: "4000.0",
+      asset0_price_usd: "2000.0",
+      asset1_price_usd: "1.0",
+      external_id: "66666",
+      pool_address: "0xpool6666",
+      active: true
+    )
+    hedge2 = Hedge.create!(position: position2, target: "0.5", tolerance: "0.05", active: true)
+
+    # The API returns null (not []) when the wallet has no subaccounts
+    mock_service = build_mock_service(positions: [], subaccounts: nil)
+
+    HyperliquidService.stub(:new, mock_service) do
+      HedgeSyncJob.perform_now(hedge.id)
+    end
+
+    hedge.reload
+    assert_equal NEW_SUBACCOUNT, hedge.asset0_hl_account
+    assert_equal NEW_SUBACCOUNT, hedge.asset1_hl_account
+  ensure
     hedge2&.destroy
     position2&.destroy
   end

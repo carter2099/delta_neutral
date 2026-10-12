@@ -192,17 +192,47 @@ class HyperliquidServiceTest < ActiveSupport::TestCase
     assert_equal "0xsub1", called_with[:addr]
   end
 
-  test "create_subaccount calls SDK" do
+  test "create_subaccount calls SDK and returns the new address" do
     called_with = nil
+    new_address = "0x" + "a" * 40
     mock_exchange = Object.new
-    mock_exchange.define_singleton_method(:create_sub_account) { |**args| called_with = args; { "subAccountUser" => "0xnewsub" } }
+    mock_exchange.define_singleton_method(:create_sub_account) do |**args|
+      called_with = args
+      { "status" => "ok", "response" => { "type" => "createSubAccount", "data" => new_address } }
+    end
     mock_sdk = Object.new
     mock_sdk.define_singleton_method(:exchange) { mock_exchange }
     @service.instance_variable_set(:@sdk, mock_sdk)
 
     result = @service.create_subaccount(name: "hedge-1-eth")
     assert_equal "hedge-1-eth", called_with[:name]
-    assert_equal "0xnewsub", result["subAccountUser"]
+    assert_equal new_address, result
+  end
+
+  test "create_subaccount accepts data as a Hash with subAccountUser" do
+    new_address = "0x" + "b" * 40
+    mock_exchange = Object.new
+    mock_exchange.define_singleton_method(:create_sub_account) do |**_|
+      { "status" => "ok", "response" => { "type" => "createSubAccount", "data" => { "subAccountUser" => new_address } } }
+    end
+    mock_sdk = Object.new
+    mock_sdk.define_singleton_method(:exchange) { mock_exchange }
+    @service.instance_variable_set(:@sdk, mock_sdk)
+
+    assert_equal new_address, @service.create_subaccount(name: "hedge-1-eth")
+  end
+
+  test "create_subaccount raises when the exchange rejects the request" do
+    mock_exchange = Object.new
+    mock_exchange.define_singleton_method(:create_sub_account) do |**_|
+      { "status" => "err", "response" => "Cannot create sub-accounts until enough volume traded" }
+    end
+    mock_sdk = Object.new
+    mock_sdk.define_singleton_method(:exchange) { mock_exchange }
+    @service.instance_variable_set(:@sdk, mock_sdk)
+
+    error = assert_raises(RuntimeError) { @service.create_subaccount(name: "hedge-1-eth") }
+    assert_includes error.message, "Cannot create sub-accounts until enough volume traded"
   end
 
   test "transfer_to_subaccount calls SDK with is_deposit true" do
@@ -236,7 +266,7 @@ class HyperliquidServiceTest < ActiveSupport::TestCase
   test "list_subaccounts queries main wallet" do
     called_with = nil
     mock_info = Object.new
-    mock_info.define_singleton_method(:user_subaccounts) { |addr| called_with = addr; [ { "subAccountUser" => "0xsub1" } ] }
+    mock_info.define_singleton_method(:sub_accounts2) { |addr| called_with = addr; [ { "name" => "hedge-1-eth", "subAccountUser" => "0xsub1" } ] }
     mock_sdk = Object.new
     mock_sdk.define_singleton_method(:info) { mock_info }
     @service.instance_variable_set(:@sdk, mock_sdk)
@@ -244,6 +274,16 @@ class HyperliquidServiceTest < ActiveSupport::TestCase
     result = @service.list_subaccounts
     assert_equal "0xwallet", called_with
     assert_equal 1, result.size
+  end
+
+  test "list_subaccounts returns empty array when the API returns null" do
+    mock_info = Object.new
+    mock_info.define_singleton_method(:sub_accounts2) { |_| nil }
+    mock_sdk = Object.new
+    mock_sdk.define_singleton_method(:info) { mock_info }
+    @service.instance_variable_set(:@sdk, mock_sdk)
+
+    assert_equal [], @service.list_subaccounts
   end
 
   test "account_balance parses margin summary" do
