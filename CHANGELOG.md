@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.31] - 2026-10-12
+
+### Changed
+- Bumped hyperliquid from 1.9.2 to 2.0.0 (supersedes Dependabot #94). The app uses none of the APIs that 2.0.0 removed or changed (`Info#aligned_quote_token_info`, `Exchange#activate_outcome_deployer`, WebSocket `subscribe`).
+- The SDK now raises `ArgumentError` for a `HYPERLIQUID_PRIVATE_KEY` that isn't 64 hex characters (with an optional `0x` prefix). Every key that worked before still works.
+
 ## [0.1.30] - 2026-10-07
 
 ### Changed
