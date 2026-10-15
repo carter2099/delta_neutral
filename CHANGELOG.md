@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.32] - 2026-10-15
+
+### Changed
+- Bumped selenium-webdriver from 4.50.0 to 4.51.0
+- Bumped thruster from 0.1.26 to 0.1.27
+- Bumped webmock from 3.26.4 to 3.34.0
+
 ## [0.1.31] - 2026-10-12
 
 ### Changed
