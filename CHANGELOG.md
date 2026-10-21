@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.33] - 2026-10-21
+
+### Changed
+- Bumped sqlite3 from 2.9.6 to 2.10.1
+
 ## [0.1.32] - 2026-10-15
 
 ### Changed
