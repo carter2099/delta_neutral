@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.35] - 2026-11-04
+
+### Changed
+- Bumped bootsnap from 1.26.0 to 1.26.1
+- Bumped hyperliquid from 2.0.0 to 2.0.1
+- Bumped selenium-webdriver from 4.51.0 to 4.52.0
+- Bumped tailwindcss-rails from 4.6.0 to 4.7.0
+
+### Security
+- Bumped rails from 8.1.4 to 8.1.4.1 (GHSA-5957-c7qm-m469, GHSA-2586-8ghr-69fj, GHSA-2gff-2mmg-m73p, GHSA-gmj8-hvj3-49mw, GHSA-r9jg-fmfx-2gv6, GHSA-rwvh-fw6r-pwvp, GHSA-wm3x-v3qw-4jh3, GHSA-x6mj-8jx9-qhqv, GHSA-2p2f-4rq4-gjwc, GHSA-68p9-83h6-5wpj, GHSA-rq8q-p985-fjq7, GHSA-v6rj-xm57-3p59, GHSA-3f4q-8x5m-76v8, GHSA-3w93-6hmw-whh4, GHSA-4v2w-w6g6-f8f8, GHSA-f3w6-w445-fwh9, GHSA-hfr4-8rjc-97m2, GHSA-p2pm-g2h6-7j5j, GHSA-v924-7rp8-4mxh, GHSA-2w9f-fxwj-w2qf, GHSA-8474-xrp6-wh69)
+
 ## [0.1.34] - 2026-11-04
 
 ### Changed
