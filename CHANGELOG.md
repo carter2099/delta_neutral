@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.34] - 2026-11-04
+
+### Changed
+- Bumped crass from 1.0.7 to 1.0.8
+
+### Security
+- Bumped addressable from 2.9.0 to 2.9.2 (GHSA-4w5q-wg7v-w6gp, GHSA-539f-xcgw-2gjg, GHSA-8gmh-2hhj-2hv9, GHSA-9crm-g4mf-wc5j, GHSA-9f42-57jx-vpp3, GHSA-j82w-28jv-3pmj, GHSA-qq38-m9mg-xjj5)
+- Bumped loofah from 2.25.2 to 2.25.3 (GHSA-345x-3rq2-jfrm, GHSA-h6v6-rg66-fqj4, GHSA-jcff-cj73-4w4f, GHSA-m3x9-938q-5767, GHSA-mf2j-8f84-cc9q, GHSA-p9wj-w8xq-vjx6)
+- Bumped nokogiri from 1.19.4 to 1.19.7 (GHSA-3w22-6jfg-527w, GHSA-4p39-36wj-23h4, GHSA-v995-44v6-5fqm)
+- Bumped net-ssh from 7.3.1 to 7.3.8 (GHSA-3x7f-q7wf-fp73, GHSA-ggxh-cfwq-5xqc, GHSA-pfqh-p9vh-wx4p, GHSA-qpg5-fx6p-8cq3, GHSA-r75w-7fhp-84w8, GHSA-rpq3-v334-f5pm, GHSA-vxj5-fg65-x765)
+- Bumped rack from 3.2.7 to 3.2.8 (GHSA-2j8w-xcrc-x985, GHSA-5v64-555j-wjxm, GHSA-p8x9-v4hv-2w4g, GHSA-wvg4-6p58-3gh3)
+- Bumped rails-html-sanitizer from 1.7.1 to 1.7.2 (GHSA-cpgf-5mjf-73p7, GHSA-h7wh-q2qr-458c)
+- Bumped sqlite3 from 2.10.1 to 2.10.2 (GHSA-4fqr-96q8-xrfx)
+
 ## [0.1.33] - 2026-10-21
 
 ### Changed
