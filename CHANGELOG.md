@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.36] - 2026-11-11
+
+### Changed
+- Bumped solid_queue from 1.7.0 to 1.7.2
+
 ## [0.1.35] - 2026-11-04
 
 ### Changed
