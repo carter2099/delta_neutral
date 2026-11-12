@@ -6,7 +6,7 @@ Delta Neutral is a single-user, self-hosted auto hedge rebalancer. It monitors U
 
 ## Tech Stack
 
-- **Framework:** Rails 8.1.1
+- **Framework:** Rails 8.1 on Ruby 3.4 (exact versions: `Gemfile.lock`, `.ruby-version`; the Dockerfile's `RUBY_VERSION` must match `.ruby-version`)
 - **Database:** SQLite (via Solid Queue, Solid Cache, Solid Cable)
 - **Background Jobs:** Solid Queue with recurring schedule
 - **Frontend:** Hotwire (Turbo + Stimulus), Tailwind CSS v4

@@ -32,7 +32,7 @@ Each asset in a pair is hedged independently, allowing for asymmetric movements.
 
 ## Prerequisites
 
-- **Ruby 3.4.8** 
+- **Ruby 3.4.12** (see `.ruby-version`)
 - A [Hyperliquid](https://hyperliquid.xyz) account with API credentials
 - A [The Graph](https://thegraph.com) API key - used for Uniswap data
 - EVM RPC endpoints (e.g. [Alchemy](https://www.alchemy.com) or [Infura](https://www.infura.io)) for Ethereum, Arbitrum, and Base - used for on-chain fee reads

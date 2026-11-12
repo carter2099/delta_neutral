@@ -5,12 +5,9 @@ on:
   push:
     branches: [ main ]
 
-# Runner image is pinned: ubuntu-latest moved to ubuntu-26.04, for which setup-ruby
-# only ships the newest patch of each Ruby series, not the one in .ruby-version.
-# Move back to ubuntu-latest together with a Ruby bump.
 jobs:
   scan_ruby:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
@@ -31,7 +28,7 @@ jobs:
         run: bin/bundler-audit
       
   scan_js:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
@@ -46,7 +43,7 @@ jobs:
         run: bin/importmap audit
 
   lint:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     env:
       RUBOCOP_CACHE_ROOT: tmp/rubocop
     steps:
@@ -72,7 +69,7 @@ jobs:
         run: bin/rubocop -f github
 
   test:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
 
     # services:
     #  redis:
@@ -97,7 +94,7 @@ jobs:
         run: bin/rails db:test:prepare test
 
   system-test:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
 
     # services:
     #  redis:
