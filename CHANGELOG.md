@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.38] - 2026-11-13
+
+### Changed
+- Bumped msgpack from 1.8.3 to 1.8.7
+
 ## [0.1.37] - 2026-11-12
 
 ### Security
