@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.39] - 2026-11-18
+
+### Changed
+- Bumped puma from 8.0.2 to 8.1.2
+
 ## [0.1.38] - 2026-11-13
 
 ### Changed
