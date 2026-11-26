@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.41] - 2026-11-26
+
+### Changed
+- Bumped selenium-webdriver from 4.52.0 to 4.54.0
+- Bumped image_processing from 2.2.0 to 2.2.2
+- Bumped bootsnap from 1.26.1 to 1.26.2
+- Bumped thruster from 0.1.27 to 0.1.28
+- Bumped rack from 3.2.8 to 3.2.9
+- Bumped webmock from 3.34.0 to 3.41.0
+- Bumped brakeman from 8.1.0 to 8.1.1
+
 ## [0.1.40] - 2026-11-26
 
 ### Security
