@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [0.1.40] - 2026-11-26
+
+### Security
+- Bumped Ruby from 3.4.12 to 3.4.13 (`.ruby-version` and the Dockerfile's `RUBY_VERSION`) for Ruby2Shell (CVE-2026-132825, a heap overflow in string case conversion reachable without authentication in default Rails apps) and the six regexp/string flaws fixed with it. Docker Compose deployments get it on the next rebuild: `docker compose -f docker-compose.prod.yml up -d --build`.
+- Bumped net-ssh from 7.3.8 to 7.3.10 (GHSA-hjwv-j52r-xcg7: revoked `known_hosts` keys accepted; GHSA-qcf4-j55x-72hv: HTTPS proxy skipped TLS verification). It is used only by the Kamal deploy tooling.
+- Bumped httpx from 1.7.2 to 1.9.2 (CVE-2026-129784), with http-2 from 1.1.2 to 1.3.0.
+
 ## [0.1.39] - 2026-11-18
 
 ### Changed
